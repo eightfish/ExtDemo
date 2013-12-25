@@ -488,6 +488,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         var store = EvolveQueryEditor.model.Query.getOutputFieldsStore();
 		if (store.getCount() == 0) return;
 		
+		//TODO: this logic maybe can move into proxy 
 		var outputFieldSortingModelList = [];
         store.each(function(model) {
 			var outputFieldSortingModel = EvolveQueryEditor.model.OutputFieldSortingModel.convertFromOuputFieldModel(model);
@@ -495,7 +496,6 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
 		});
 		
 		var outputFieldSortingStore = Ext.create('Ext.data.Store', {
-// 				storeId: 'outputFieldsSortingStore',
                 model: "EvolveQueryEditor.model.OutputFieldSortingModel",
 				data: outputFieldSortingModelList,
                 proxy: {

@@ -69,6 +69,9 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 								{
 								    text: 'Extraction Type',
 								    dataIndex: 'extractType',
+									renderer: function(extractType) {
+										return extractType.get('description');
+									},
 								    width: 150,
 								    sortable: false,
 								    menuDisabled: true
