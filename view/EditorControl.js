@@ -482,21 +482,33 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
     },
 
     onPopupSortingWindowClick: function () {
-		var sortingOutputFieldModelList = [];
-        var store = EvolveQueryEditor.model.Query.getOutputFieldsStore();
-		
-        store.each(function(model) {
-			var sortingOutputFieldModel = EvolveQueryEditor.model.OutputFieldSortingModel.convertFromOuputFieldModel(model);
-			sortingOutputFieldModelList.push(sortingOutputFieldModel);
-		});
-		
-        //convert each OutputFieldModel in the store to a OutputFieldSortingModel
+		//convert each OutputFieldModel in the store to a OutputFieldSortingModel
         //then create a store using these OutputFieldSortingModel objects
         //pass this store to sortingWindow for manipulation
-        if (store.getCount() == 0) return;
-
+        var store = EvolveQueryEditor.model.Query.getOutputFieldsStore();
+		if (store.getCount() == 0) return;
+		
+		var outputFieldSortingModelList = [];
+        store.each(function(model) {
+			var outputFieldSortingModel = EvolveQueryEditor.model.OutputFieldSortingModel.convertFromOuputFieldModel(model);
+			outputFieldSortingModelList.push(outputFieldSortingModel);
+		});
+		
+		var outputFieldSortingStore = Ext.create('Ext.data.Store', {
+// 				storeId: 'outputFieldsSortingStore',
+                model: "EvolveQueryEditor.model.OutputFieldSortingModel",
+				data: outputFieldSortingModelList,
+                proxy: {
+                    type: 'memory',
+                    reader: {
+                        type: 'json',
+                        root: 'items'
+                    }
+                }
+		});
+		
         var sortingWindow = Ext.create('EvolveQueryEditor.view.SortingWindow', {
-            outputFieldsStore: store,
+            outputFieldsStore: outputFieldSortingStore,
             onLookupComplete: this.onSortingComplete,
             scope: this
         });

@@ -51,8 +51,7 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 						    itemId: 'sortingGrid',
 						    region: 'center',
 						    plugins: [cellEditing],
-						    store: me.outputFieldsStore,
-							store: null,
+						    store: me.outputFieldsStore,							
 						    // viewConfig : {
 						    // plugins : {
 						    // ptype : 'gridviewdragdrop',
@@ -85,7 +84,6 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 									{
 									    xtype: 'combobox',
 									    store: EvolveQueryEditor.store.SortingTypeStore.Instance,
-										store: null,
 									    editable: false,
 									    queryMode: 'local',
 									    displayField: 'sortingType',
