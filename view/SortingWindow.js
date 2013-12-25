@@ -92,7 +92,9 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 									    displayField: 'sortingType',
 									    valueField: 'sortingTypeId'
 									},
-								    renderer: me.onRendererSortType
+								    renderer: function(sortingType){
+										return sortingType.get('sortingType');
+									}
 								}
 						    ]
 						},
@@ -191,23 +193,6 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 		);
 
         me.callParent(arguments);
-    },
-
-    //TODO: it maybe move to model 
-    onRendererSortType: function (value) {
-        switch (value) {
-            case 0:
-                return 'None';
-                break;
-            case 1:
-                return 'Ascending';
-                break;
-            case 2:
-                return 'Descending';
-                break;
-        }
-
-        return value;
     },
 
     sortStore: function (getExchangedRowIndex) {
