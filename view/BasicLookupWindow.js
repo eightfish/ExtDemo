@@ -105,9 +105,11 @@ Ext.define('EvolveQueryEditor.view.BasicLookupWindow', {
                 parent.loadMask.hide();
 
                 var data = Ext.decode(response.responseText);
-
-                var grid = parent.createGrid(parent, parent.createStore(data.fields, data.data), data.columns);
-                parent.add(grid);
+                if (this.grid !== undefined) {
+                    parent.remove(this.grid);
+                }
+                this.grid = parent.createGrid(parent, parent.createStore(data.fields, data.data), data.columns);
+                parent.add(this.grid);
             },
             failure: function(response, options) {
                 parent.loadMask.hide();
@@ -145,4 +147,6 @@ Ext.define('EvolveQueryEditor.view.BasicLookupWindow', {
             this.onLookupComplete(this.scope);
         }
     }
+}, function (Cls) {
+    Cls.Instance = EvolveQueryEditor.view.BasicLookupWindow.create();
 });

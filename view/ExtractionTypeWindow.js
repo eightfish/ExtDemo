@@ -12,7 +12,9 @@ Ext.define('EvolveQueryEditor.view.ExtractionTypeWindow', {
     requires: [
         'Ext.util.*',
         'Ext.form.*',
-        'EvolveQueryEditor.util.QAALogger'
+        'EvolveQueryEditor.util.QAALogger',
+        'EvolveQueryEditor.model.ExtractionTypeModel',
+        'EvolveQueryEditor.model.FieldDataTypeModel'
     ],
 
     modal: true,
@@ -54,7 +56,6 @@ Ext.define('EvolveQueryEditor.view.ExtractionTypeWindow', {
                             forceFit: false,
                             hideHeaders: true,
                             rowLines: false,
-                            title: 'Operation',
                             store: Ext.create('Ext.data.ArrayStore', {
                                 model:"EvolveQueryEditor.model.ExtractionTypeModel"                               
                             }),
@@ -92,6 +93,7 @@ Ext.define('EvolveQueryEditor.view.ExtractionTypeWindow', {
     items: [
         {
             xtype: 'container',
+            id: 'qnaSegmentContainer',
             margin: '0 0 0 15',
             items: [
                 {
@@ -122,7 +124,7 @@ Ext.define('EvolveQueryEditor.view.ExtractionTypeWindow', {
         },
         {
             xtype: 'container',
-            margins: '',
+            id: 'qnaReverseSignAndScalingFactorContainer',
             margin: '0 0 0 15',
             width: 180,
             items: [
@@ -134,8 +136,6 @@ Ext.define('EvolveQueryEditor.view.ExtractionTypeWindow', {
                 },
                 {
                     xtype: 'fieldcontainer',
-                    height: 120,
-                    width: 150,
                     fieldLabel: '',
                     items: [
                         {
@@ -173,7 +173,7 @@ Ext.define('EvolveQueryEditor.view.ExtractionTypeWindow', {
                                 {
                                     xtype: 'button',
                                     margin: '5 5 5 5',
-                                    width: 50,
+                                    width: 75,
                                     text: 'Ok',
                                     listeners: {
                                         click: {
@@ -185,7 +185,7 @@ Ext.define('EvolveQueryEditor.view.ExtractionTypeWindow', {
                                 {
                                     xtype: 'button',
                                     margin: '5 5 5 5',
-                                    width: 50,
+                                    width: 75,
                                     text: 'Cancel',
                                     listeners: {
                                         click: {
@@ -211,11 +211,31 @@ Ext.define('EvolveQueryEditor.view.ExtractionTypeWindow', {
         me.callParent(arguments);
     },
 
-
+    updateControlsVisible:function(record){
+        
+        var reverseSignAndScalingFactorContainer = Ext.getCmp('qnaReverseSignAndScalingFactorContainer');
+        var segmentContainer = Ext.getCmp('qnaSegmentContainer');
+        
+        record === EvolveQueryEditor.model.ExtractionTypeModel.Segment ? segmentContainer.show():segmentContainer.hide();
+        
+        var showReverseSignAndScalingFactor = false;
+        var dataType = this.config.record.get("dataType");
+        if(dataType === EvolveQueryEditor.model.FieldDataTypeModel.NumericDataType)
+        {
+            showReverseSignAndScalingFactor= true;
+        }
+        else if( record ===  EvolveQueryEditor.model.ExtractionTypeModel.Count || record === EvolveQueryEditor.model.ExtractionTypeModel.DistinctCount )
+        {
+            showReverseSignAndScalingFactor= true;
+        }
+        
+        showReverseSignAndScalingFactor?reverseSignAndScalingFactorContainer.show():reverseSignAndScalingFactorContainer.hide();
+    },
+    
 
     onqnaExtractionTypeListCellClick: function (tableview, td, cellIndex, record, tr, rowIndex, e, eOpts) {
-
-        EvolveQueryEditor.util.QAALogger.info(record.get('name') + ' ' + record.get('description'));
+        
+        this.updateControlsVisible(record);         
     },
 
     onBtnOk: function (button, e, eOpts) {
@@ -255,7 +275,8 @@ Ext.define('EvolveQueryEditor.view.ExtractionTypeWindow', {
         });
         
         var sm = this.down("#qnaExtractionTypeList").getSelectionModel();
-        sm.select(this.config.record.get("extractType"));
+        var currentExtractType = this.config.record.get("extractType");
+        sm.select(currentExtractType);
 
 
         //set segment offset
@@ -269,6 +290,8 @@ Ext.define('EvolveQueryEditor.view.ExtractionTypeWindow', {
 
         //set scaling factor
         this.down("#qnaCbxScalingFactor").setValue(this.config.record.get("scalingFactor"));
+        
+        this.updateControlsVisible(currentExtractType);
     }
    
 });;

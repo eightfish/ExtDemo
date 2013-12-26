@@ -109,6 +109,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                     title: 'Filters',
                     titleCollapse: true,
                     itemId: 'qnaFiltersPanel',
+                    id: 'qnaPanelFilters',
                     items: [
                         {
                             xtype: 'panel',
@@ -130,6 +131,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                             xtype: 'combobox',
                                             tpl: '<tpl for="."><div class="x-boundlist-item"><span style="display: inline-block; height: 50px;line-height: 50px;vertical-align: middle"><img style="vertical-align: middle" src="{TypeImage}"/>&nbsp;&nbsp;{Caption}</span></div></tpl>',
                                             itemId: 'cbQueryTypes',
+                                            id: 'qnaComboBoxQueryType',
                                             width: 301,
                                             fieldLabel: 'Report Type',
                                             editable: false,
@@ -150,11 +152,12 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                             tpl: '<tpl for="."><div class="x-boundlist-item"><span style="display: inline-block; height: 26px;line-height: 26px;vertical-align: middle"><img style="vertical-align: middle" src="{IconUrl}"/>&nbsp;&nbsp;{Description}</span></div></tpl>',
                                             disabled: EvolveQueryEditor.model.Query.getQueryType() === undefined,
                                             itemId: 'cbProducts',
+                                            id: 'qnaComboBoxProduct',
                                             width: 301,
                                             fieldLabel: 'Product',
                                             editable: false,
                                             displayField: 'Description',
-                                            store: Ext.create('EvolveQueryEditor.store.ProductStore'),
+											store: EvolveQueryEditor.model.Query.getProductStore(),
                                             valueField: 'Code',
                                             value: EvolveQueryEditor.model.Query.getProductCode(),
                                             listeners: {
@@ -178,6 +181,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                             xtype: 'gridpanel',
                             region: 'center',
                             itemId: 'gridFilters',
+                            id: 'qnaGridFilters',
                             header: false,
                             title: 'My Grid Panel',
                             store: EvolveQueryEditor.model.Query.getFilterStore(),
@@ -205,7 +209,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                                 }
                                                 else {
                                                     // Perform a general lookup ...
-                                                    var lookupWindow = EvolveQueryEditor.view.BasicLookupWindow.create();
+                                                    var lookupWindow = EvolveQueryEditor.view.BasicLookupWindow.Instance;
                                                     lookupWindow.viewFilters = me.down('#gridFilters');
 
                                                     // It would appear that the record passed in is a clone from the store ...
@@ -215,6 +219,8 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                                     lookupWindow.filterModelIndex = storeRecordIndex;
                                                     if (record.get('superFieldFilter') === true) {
                                                         lookupWindow.onLookupComplete = me.onSuperfieldLookupComplete;
+                                                    } else {
+                                                        lookupWindow.onLookupComplete = undefined;
                                                     }
                                                     lookupWindow.scope = me;
                                                     lookupWindow.show();
@@ -271,6 +277,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                         align: 'stretch',
                         type: 'hbox'
                     },
+                    id: 'qnaPanelOutput',
                     title: 'Output',
                     titleCollapse: true,
                     items: [
@@ -303,12 +310,14 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                     items: [
                                         {
                                             xtype: 'button',
+                                            id: 'qnaButtonAddFilter',
                                             x: 20,
                                             y: 10,
                                             text: 'Add Filter'
                                         },
                                         {
                                             xtype: 'textfield',
+                                            id: 'qnaTextFieldFind',
                                             x: 120,
                                             y: 10,
                                             fieldLabel: 'Find',
@@ -326,6 +335,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                     useArrows: true,
                                     rootVisible: false,
                                     itemId: 'fieldsTree',
+                                    id: 'qnaTreeSelectionList',
                                     listeners: {
                                         beforeitemexpand: { fn: me.expandFieldsCheck, scope: me },
                                         itemdblclick: { fn: me.dblClickField, scope: me }
@@ -383,31 +393,12 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                             ]
                         },
                         {
-//                             xtype: 'panel',
-//                             layout: {
-//                                 type: 'vbox'
-//                             },
-//                             margin: 10,
-//                             frameHeader: false,
-//                             header: false,
-//                             items: [{
-//                                 xtype: 'button',
-//                                 text: 'Sort',
-//                                 id: 'qnaButtonSort',
-//                                 listeners:
-// 							    {
-// 							        click:
-// 								    {
-// 								        fn: me.onPopupSortingWindowClick,
-// 								        scope: me
-// 								    }
-// 							    }
-//                             }, {
                             xtype: 'gridpanel',
                             flex: 1,
                             margin: 10,
                             title: 'Output Columns',
                             itemId: 'qnaGridFields',
+                            id: 'qnaGridFields',
                             store: EvolveQueryEditor.model.Query.getOutputFieldsStore(),
 							tools: [{
 								type: 'gear',
@@ -445,7 +436,6 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                     text: 'Sort Order'
                                 }
                             ]
-//                            }]
                         }
                     ]
                 }
@@ -551,7 +541,6 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
             });
 			
 			
-		extractTypeWindow.scope = me;
 		extractTypeWindow.onExtractionTypeWindowSetComplete = function(offset,offsetLength,reverseSign,factorValue,newExtractedType){
             EvolveQueryEditor.util.QAALogger.info("Extration type window closed");			
 			
@@ -572,9 +561,9 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         var me = scope;
         me.down('#gridFilters').getView().refresh();
 
-        var allSuperFieldsComplete = true;
+        me.clearExistedFiltersAndFields(function (filter) { return filter.get('superFieldFilter') === false; });
 
-        // TODO: Check that all superfields are filled in ...
+        var allSuperFieldsComplete = EvolveQueryEditor.model.Query.isAllSuperFieldFiltersSet();
 
         if (allSuperFieldsComplete) {
             // We can now add the table filter ...
@@ -583,9 +572,41 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                 codePath: 'TABLE'
             });
 
-            var grid = me.down('#gridFilters');
-            grid.store.add(modelTable);
+            EvolveQueryEditor.model.Query.getFilterStore().add(modelTable);
+
         }
+    },
+
+    clearExistedFiltersAndFields: function(condition){
+        //Remove all existed filters.
+        this.clearFilters(condition);
+
+        //Clear selection list.
+        this.clearFieldsTree();
+
+        //Clear output fields.
+        this.clearOutputFields();
+    },
+
+    clearFilters: function(condition){
+        var filters = [];
+        var filterStore = EvolveQueryEditor.model.Query.getFilterStore();
+        for (var i = 0; i < filterStore.count() ; i++) {
+            var filter = filterStore.getAt(i);
+            if (condition(filter)) {
+                filters.push(filter);
+            }
+        }
+        filterStore.remove(filters);
+    },
+
+    clearOutputFields: function(){
+        EvolveQueryEditor.model.Query.getOutputFieldsStore().removeAll();
+    },
+
+    clearFieldsTree: function(){
+        var treeFields = this.down('#fieldsTree');
+        treeFields.setRootNode([]);
     },
 
     loadFieldsTree:function(){
@@ -622,6 +643,8 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         var grid = me.down('#gridFilters');
         grid.getView().refresh();
 
+        me.clearExistedFiltersAndFields(function (filter) { return filter.get('superFieldFilter') === false && filter.get('codePath') !== "TABLE"; });
+
         // Load Mandatory Fields ...
         EvolveQueryEditor.view.EvolveProgressDialog.SetProgressText('Retrieving mandatory fields ...');
         EvolveQueryEditor.view.EvolveProgressDialog.show();
@@ -649,9 +672,12 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
     },
 
     onCbProductsSelect: function (combo, records, eOpts) {
+        var me = this;
         var rt = records[0];
         var model = EvolveQueryEditor.model.Query;
         model.product = rt;
+
+        me.clearExistedFiltersAndFields(function (filter) { return true; });
 
         // Load super filters ...
         var grid = this.down('#gridFilters');
@@ -661,7 +687,6 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         var storeTables = EvolveQueryEditor.model.Query.getSuperFiltersStore(function (records) {
             EvolveQueryEditor.view.EvolveProgressDialog.hide();
 
-            grid.store.removeAll();
             for (var rowIndex = 0; rowIndex < records.length; rowIndex++) {
                 if (records[rowIndex].get('from') == '') {
                     records[rowIndex].set('from', undefined);  // No default - so make it really no value
@@ -713,9 +738,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
             reverseSign: false,
             extractType: nextAvaliableExtractType,
             fieldName: record.raw.text,
-            lookupCategory: record.raw.lookupCategory,
-            sortingType: EvolveQueryEditor.model.SortingTypeModel.Ascending, 
-            sortIndex: 0 //by default ascending but no sort index            
+            lookupCategory: record.raw.lookupCategory
         });
 
         EvolveQueryEditor.model.Query.getOutputFieldsStore().add(newOutputField);
@@ -805,14 +828,19 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
     },
 
     setQueryDefinition: function (queryDefinition) {
-        if (queryDefinition !== undefined && queryDefinition.length > 0) {
-            var matches = queryDefinition.match(/<Formula>(.+)<\/Formula>/);
-            if (matches.length === 2) {
-                return EvolveQueryEditor.model.Query.queryFromFormula(matches[1]);
-            } else {
-                EvolveQueryEditor.util.QAALogger.error(Ext.String.format("The given query definition is not correct: {0}"), queryDefinition);
-                return false;
+        try{
+            if (queryDefinition !== undefined && queryDefinition.length > 0) {
+                var matches = queryDefinition.match(/<Formula>(.+)<\/Formula>/);
+                if (matches.length === 2) {
+                    return EvolveQueryEditor.model.Query.queryFromFormula(matches[1]);
+                } else {
+                    EvolveQueryEditor.util.QAALogger.error(Ext.String.format("The given query definition is not correct: {0}"), queryDefinition);
+                    return false;
+                }
             }
+        } catch (err) {
+            EvolveQueryEditor.util.QAALogger.error(Ext.String.format("The given query definition is not correct: {0}. The error is: {1}"), queryDefinition, err.message);
+            return false;
         }
     },
 

@@ -28,7 +28,8 @@ Ext.define("EvolveQueryEditor.model.ExtractionTypeModel", {
 
     fields: [
         {name: 'name',  type: 'string'},
-        {name: 'description', type: 'string'}
+        { name: 'description', type: 'string' },
+        { name: 'intValue', type: 'int' }
     ],
     
     isNumeric: function() {
@@ -38,72 +39,80 @@ Ext.define("EvolveQueryEditor.model.ExtractionTypeModel", {
 }, function(Cls) {
     Cls.None = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_NONE",
-        description: "None"
+        description: "None",
+        intValue: 0
     });
     
     Cls.Segment = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_SEGMENT",
-        description: "Segment"
+        description: "Segment",
+        intValue: 10000
     });
     
     Cls.Count = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_COUNT",
-        description: "Count"
+        description: "Count",
+        intValue: 2
     });
     
     Cls.Min = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_MIN",
-        description: "Min"
+        description: "Min",
+        intValue: 4
     });
     
     Cls.Max = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_MAX",
-        description: "Max"
+        description: "Max",
+        intValue: 5
     });
     
     Cls.DistinctCount = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_DISTINCT_COUNT",
-        description: "Distinct Count"
+        description: "Distinct Count",
+        intValue: 7
     });
     
     Cls.Average = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_AVERAGE",
-        description: "Average"
+        description: "Average",
+        intValue: 3
     });
     
     Cls.DistinctAverage = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_DISTINCT_AVERAGE",
-        description: "Distinct Average"
+        description: "Distinct Average",
+        intValue: 8
     });
     
     Cls.Sum = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_SUM",
-        description: "Sum"
+        description: "Sum",
+        intValue: 1
     });
     
     Cls.DistinctSum = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_DISTINCT_SUM",
-        description: "Distinct Sum"
-    });
-    
-    Cls.DistinctSum = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
-        name: "IS_DISTINCT_SUM",
-        description: "Distinct Sum"
+        description: "Distinct Sum",
+        intValue: 6
     });
     
     Cls.Code = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_LOOKUP_CODE",
-        description: "Code"
+        description: "Code",
+        intValue: 20
     });
 
     Cls.Description = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_LOOKUP_DESC",
-        description: "Description"
+        description: "Description",
+        intValue: 21
     });
 
     Cls.ShortDescription = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_LOOKUP_SHORT_DESC",
-        description: "Short Description"
+        description: "Short Description",
+        intValue: 22
     });
     
     var extractionTypesForFixedLookupField = [EvolveQueryEditor.model.ExtractionTypeModel.Code, EvolveQueryEditor.model.ExtractionTypeModel.Description, EvolveQueryEditor.model.ExtractionTypeModel.ShortDescription];
@@ -118,14 +127,14 @@ Ext.define("EvolveQueryEditor.model.ExtractionTypeModel", {
             } else if(reportType === EvolveQueryEditor.model.ReportTypeModel.SummaryReport) {
                 extractionTypes = [EvolveQueryEditor.model.ExtractionTypeModel.None, EvolveQueryEditor.model.ExtractionTypeModel.Count, 
                 EvolveQueryEditor.model.ExtractionTypeModel.Min, EvolveQueryEditor.model.ExtractionTypeModel.Max, 
-                EvolveQueryEditor.model.ExtractionTypeModel.DistinctCount];
+                EvolveQueryEditor.model.ExtractionTypeModel.DistinctCount,EvolveQueryEditor.model.ExtractionTypeModel.Segment];
                 
             } else {
                 EvolveQueryEditor.util.QAALogger.error("Unknown report type", {dump: reportType});
             }
         } else if(fieldDataType === EvolveQueryEditor.model.FieldDataTypeModel.TimeDataType) {
             if(reportType === EvolveQueryEditor.model.ReportTypeModel.DetailReport) {
-                extractionTypes = [EvolveQueryEditor.model.ExtractionTypeModel.None, EvolveQueryEditor.model.ExtractionTypeModel.Segment];
+                extractionTypes = [EvolveQueryEditor.model.ExtractionTypeModel.None];
             
             } else if(reportType === EvolveQueryEditor.model.ReportTypeModel.SummaryReport) {
                 extractionTypes =  [EvolveQueryEditor.model.ExtractionTypeModel.None, EvolveQueryEditor.model.ExtractionTypeModel.Count, 
@@ -136,7 +145,7 @@ Ext.define("EvolveQueryEditor.model.ExtractionTypeModel", {
                 EvolveQueryEditor.util.QAALogger.error("Unknown report type", {dump: reportType});
             }
             
-        } else if(fieldDataType === EvolveQueryEditor.model.FieldDataTypeModel.StringDataType) {
+        } else if(fieldDataType === EvolveQueryEditor.model.FieldDataTypeModel.NumericDataType) {
             if(reportType === EvolveQueryEditor.model.ReportTypeModel.DetailReport) {
                 extractionTypes = [EvolveQueryEditor.model.ExtractionTypeModel.None];
                 
@@ -144,8 +153,9 @@ Ext.define("EvolveQueryEditor.model.ExtractionTypeModel", {
                 extractionTypes =  [EvolveQueryEditor.model.ExtractionTypeModel.None, EvolveQueryEditor.model.ExtractionTypeModel.Count, 
                 EvolveQueryEditor.model.ExtractionTypeModel.Min, EvolveQueryEditor.model.ExtractionTypeModel.Max, 
                 EvolveQueryEditor.model.ExtractionTypeModel.DistinctCount, EvolveQueryEditor.model.ExtractionTypeModel.Sum,
-                EvolveQueryEditor.model.ExtractionTypeModel.DistinctSum, EvolveQueryEditor.model.ExtractionTypeModel.Average,
-                EvolveQueryEditor.model.ExtractionTypeModel.DistinctAverage];
+                EvolveQueryEditor.model.ExtractionTypeModel.Average,EvolveQueryEditor.model.ExtractionTypeModel.Min,
+                EvolveQueryEditor.model.ExtractionTypeModel.Max,EvolveQueryEditor.model.ExtractionTypeModel.DistinctSum,
+                EvolveQueryEditor.model.ExtractionTypeModel.DistinctCount,EvolveQueryEditor.model.ExtractionTypeModel.DistinctAverage];
                 
             } else {
                 EvolveQueryEditor.util.QAALogger.error("Unknown report type", {dump: reportType});
@@ -162,9 +172,14 @@ Ext.define("EvolveQueryEditor.model.ExtractionTypeModel", {
         var availableExtractTypes = [];
         
         if (isFixedLookup) {
+			
             availableExtractTypes = Ext.Array.merge(availableExtractTypes, extractionTypesForFixedLookupField);
-            if (reportType == EvolveQueryEditor.model.ReportTypeModel.SummaryReport) {
-                availableExtractTypes = Ext.Array.merge(availableExtractTypes, getExtractType(fieldDataType, availableExtractTypes));
+            if (reportType === EvolveQueryEditor.model.ReportTypeModel.SummaryReport) {
+				//from desktop logic, it can directly return 7 kinds of types
+				//For summary report,it should has Code\Description\Short Description\Min\Max\Count\Distinct Count seven extraction type
+                availableExtractTypes = Ext.Array.merge(availableExtractTypes, 
+					[EvolveQueryEditor.model.ExtractionTypeModel.Min,EvolveQueryEditor.model.ExtractionTypeModel.Max,
+					EvolveQueryEditor.model.ExtractionTypeModel.Count,EvolveQueryEditor.model.ExtractionTypeModel.DistinctCount]);
             }
         } else {
             availableExtractTypes = getExtractType(fieldDataType, reportType);

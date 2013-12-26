@@ -62,9 +62,11 @@ Ext.define('EvolveQueryEditor.model.OutputFieldModel', {
 			name:'sortOptionDescription',
 			type:'string',
 			convert: function (value, record) {
-				if(record.get('sortingType') !== undefined && record.get('sortIndex') !== undefined){
-					return record.get('sortingType').get('sortingType') + ' ' + record.get('sortIndex');
+				if(record.get('sortIndex') == 0){
+					return '';
 				}
+				
+				return record.get('sortingType').get('sortingType') + ' ' + record.get('sortIndex');
             }
 		}
     ]

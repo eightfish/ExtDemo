@@ -130,13 +130,13 @@ Ext.define('EvolveQueryEditor.model.Query', {
         //template:E={0},X=<sFm2>{{_sf_}}{1}</sFm2>,S={2},O={3}"
 
         var extractValue = outputField.get("extractType");
-        if (extractValue === "IS_SEGMENT") {
+        if (extractValue === EvolveQueryEditor.model.ExtractionTypeModel.Segment) {
             //Segment will be 10203 if the offset is 2 and length is 3.
             extractValue += outputField.get("segmentOffset") * 100;
             extractValue += outputField.get("segmentLength");
         }
         //If ReverseSign is true, the - will be added. for example, -2.
-        var extractionTypeWithReverseSign = Ext.String.format("{0}{1}", outputField.get("reverseSign") ? "-" : "", extractValue);
+        var extractionTypeWithReverseSign = Ext.String.format("{0}{1}", outputField.get("reverseSign") ? "-" : "", extractValue.get('intValue'));
 
         var scalingFactor = outputField.get("scalingFactor");
 
