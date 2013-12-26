@@ -490,13 +490,14 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
 			
 			if(sortingModel.get('sortingType') == EvolveQueryEditor.model.SortingTypeModel.None.get('sortingType')){
 				outputFieldsStore.getAt(match).set('sortIndex', 0);
+				outputFieldsStore.getAt(match).set('sortingType', EvolveQueryEditor.store.SortingTypeStore.Ascending);	
 			}
 			else
 			{
 				outputFieldsStore.getAt(match).set('sortIndex', ++index);
+				outputFieldsStore.getAt(match).set('sortingType', EvolveQueryEditor.store.SortingTypeStore.Instance.findRecord('sortingType',sortingModel.get('sortingType')));
 			}
 			
-			outputFieldsStore.getAt(match).set('sortingType', EvolveQueryEditor.store.SortingTypeStore.Instance.findRecord('sortingType',sortingModel.get('sortingType')));
 			outputFieldsStore.getAt(match).set('sortOptionDescription', '');  // enforce to refresh this field 
 		});
        
