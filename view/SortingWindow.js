@@ -90,10 +90,7 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 									    editable: false,
 									    queryMode: 'local',
 									    displayField: 'sortingType',
-									    valueField: 'sortingTypeId'
-									},
-								    renderer: function(sortingType){
-										return sortingType.get('sortingType');
+									    valueField: 'sortingType'
 									}
 								}
 						    ]

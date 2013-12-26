@@ -13,7 +13,7 @@ Ext.define('EvolveQueryEditor.model.OutputFieldSortingModel', {
             type: 'string'
         }, {
             name: 'sortingType',
-            type: 'auto'
+            type: 'string'
         }
     ], 
     
@@ -23,7 +23,7 @@ Ext.define('EvolveQueryEditor.model.OutputFieldSortingModel', {
 				codePath : outputFieldModel.get('codePath'),
 				extractType :  outputFieldModel.get('extractType'),
 				fieldName : outputFieldModel.get('fieldName'),
-				sortingType : outputFieldModel.get('sortingType')
+				sortingType : outputFieldModel.get('sortingType').get('sortingType')
 			});
 			}
     }
