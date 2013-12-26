@@ -491,6 +491,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
 				
 				outputFieldsStore.getAt(match).set('sortingType', EvolveQueryEditor.store.SortingTypeStore.Instance.findRecord('sortingType',sortingModel.get('sortingType')));
 				outputFieldsStore.getAt(match).set('sortIndex', ++index);
+				outputFieldsStore.getAt(match).set('sortOptionDescription', '');  // enforce to refresh this field 
 			}
 		});
        
