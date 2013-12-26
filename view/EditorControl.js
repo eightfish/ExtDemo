@@ -478,21 +478,26 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
 		
 		var index = 0;
 		sortedStore.each(function(sortingModel){
-			if(sortingModel.get('sortingType') != EvolveQueryEditor.model.SortingTypeModel.None.get('sortingType')){
-				var match = outputFieldsStore.findBy(function(record,id) {
-					if(record.get('extractType') == sortingModel.get('extractType') && record.get('codePath') == sortingModel.get('codePath'))
-						return true;
+			var match = outputFieldsStore.findBy(function(record,id) {
+				if(record.get('extractType') == sortingModel.get('extractType') && record.get('codePath') == sortingModel.get('codePath'))
+					return true;
 				});	
 				
-				if(match == -1) {
-					EvolveQueryEditor.util.QAALogger.error('The outputFields Store is not integrated');			
-					return;
-				}
-				
-				outputFieldsStore.getAt(match).set('sortingType', EvolveQueryEditor.store.SortingTypeStore.Instance.findRecord('sortingType',sortingModel.get('sortingType')));
-				outputFieldsStore.getAt(match).set('sortIndex', ++index);
-				outputFieldsStore.getAt(match).set('sortOptionDescription', '');  // enforce to refresh this field 
+			if(match == -1) {
+				EvolveQueryEditor.util.QAALogger.error('The outputFields Store is not integrated');			
+				return;
 			}
+			
+			if(sortingModel.get('sortingType') == EvolveQueryEditor.model.SortingTypeModel.None.get('sortingType')){
+				outputFieldsStore.getAt(match).set('sortIndex', 0);
+			}
+			else
+			{
+				outputFieldsStore.getAt(match).set('sortIndex', ++index);
+			}
+			
+			outputFieldsStore.getAt(match).set('sortingType', EvolveQueryEditor.store.SortingTypeStore.Instance.findRecord('sortingType',sortingModel.get('sortingType')));
+			outputFieldsStore.getAt(match).set('sortOptionDescription', '');  // enforce to refresh this field 
 		});
        
         grid.getView().refresh();
@@ -521,7 +526,11 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                         type: 'json',
                         root: 'items'
                     }
-                }
+                },
+				sorters:[{
+					property:'sortIndex',
+					direction: 'ASC'
+				}]
 		});
 		
         var sortingWindow = Ext.create('EvolveQueryEditor.view.SortingWindow', {

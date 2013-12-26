@@ -14,7 +14,10 @@ Ext.define('EvolveQueryEditor.model.OutputFieldSortingModel', {
         }, {
             name: 'sortingType',
             type: 'string'
-        }
+        },{
+			name: 'sortIndex',
+			type: 'int'
+		}
     ]
 	
 }, function(Cls) {
@@ -23,6 +26,7 @@ Ext.define('EvolveQueryEditor.model.OutputFieldSortingModel', {
 			codePath : outputFieldModel.get('codePath'),
 			extractType :  outputFieldModel.get('extractType'),
 			fieldName : outputFieldModel.get('fieldName'),
+			sortIndex : outputFieldModel.get('sortIndex'),
 			//replace binding object 'sortingType' on combobox with string 
 			//since if binding object, we must use 'renderer' to display,
 			//but a exception will be thrown when change an selection on cellEditing 
