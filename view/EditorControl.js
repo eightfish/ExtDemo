@@ -474,10 +474,26 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
     onSortingComplete: function (sortedStore, scope) {
         var me = scope;
         var grid = me.down('#qnaGridFields');
-        grid.store = sortedStore;
-        
-        var outputFieldsStore = EvolveQueryEditor.model.Query.getOutputFieldsStore();
-        
+		var outputFieldsStore = EvolveQueryEditor.model.Query.getOutputFieldsStore();
+		
+		var index = 0;
+		sortedStore.each(function(sortingModel){
+			if(sortingModel.get('sortingType') != EvolveQueryEditor.model.SortingTypeModel.None.get('sortingType')){
+				var match = outputFieldsStore.findBy(function(record,id) {
+					if(record.get('extractType') == sortingModel.get('extractType') && record.get('codePath') == sortingModel.get('codePath'))
+						return true;
+				});	
+				
+				if(match == -1) {
+					EvolveQueryEditor.util.QAALogger.error('The outputFields Store is not integrated');			
+					return;
+				}
+				
+				outputFieldsStore.getAt(match).set('sortingType', EvolveQueryEditor.store.SortingTypeStore.Instance.findRecord('sortingType',sortingModel.get('sortingType')));
+				outputFieldsStore.getAt(match).set('sortIndex', ++index);
+			}
+		});
+       
         grid.getView().refresh();
     },
 
@@ -488,7 +504,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         var store = EvolveQueryEditor.model.Query.getOutputFieldsStore();
 		if (store.getCount() == 0) return;
 		
-		//TODO: this logic maybe can move into proxy 
+		//TODO: this logic maybe move into proxy 
 		var outputFieldSortingModelList = [];
         store.each(function(model) {
 			var outputFieldSortingModel = EvolveQueryEditor.model.OutputFieldSortingModel.convertFromOuputFieldModel(model);

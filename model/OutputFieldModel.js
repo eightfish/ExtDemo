@@ -62,11 +62,12 @@ Ext.define('EvolveQueryEditor.model.OutputFieldModel', {
 			name:'sortOptionDescription',
 			type:'string',
 			convert: function (value, record) {
-                return "Wait For Add";
+				if(record.get('sortingType') == undefined && record.get('sortIndex') == undefined){
+					return EvolveQueryEditor.model.SortingTypeModel.None.get('sortingType');
+				}
+				
+                return record.get('sortingType').get('sortingType') + ' ' + record.get('sortIndex');
             }
 		}
-            
-
-        
     ]
 });
