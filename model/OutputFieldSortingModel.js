@@ -13,11 +13,22 @@ Ext.define('EvolveQueryEditor.model.OutputFieldSortingModel', {
             type: 'string'
         }, {
             name: 'sortingType',
-            type: 'string'
-        },{
-			name: 'sortIndex',
-			type: 'int'
-		}
+            type: 'auto',
+			convert: function(value, record){
+				if(Ext.getClass(value) === EvolveQueryEditor.model.SortingTypeModel) {
+					return value;
+				} 
+				
+				//sorting type int value is returned by the combobox
+				var sortingTypeObject = EvolveQueryEditor.store.SortingTypeStore.Instance.findRecord('sortingTypeId', value);
+				if(sortingTypeObject !== undefined) {
+					return sortingTypeObject;
+				}
+				
+				return EvolveQueryEditor.model.SortingTypeModel.None;
+			}
+			
+        }
     ]
 	
 }, function(Cls) {
@@ -26,19 +37,7 @@ Ext.define('EvolveQueryEditor.model.OutputFieldSortingModel', {
 			codePath : outputFieldModel.get('codePath'),
 			extractType :  outputFieldModel.get('extractType'),
 			fieldName : outputFieldModel.get('fieldName'),
-			sortIndex : outputFieldModel.get('sortIndex'),
-			//replace binding object 'sortingType' on combobox with string 
-			//since if binding object, we must use 'renderer' to display,
-			//but a exception will be thrown when change an selection on cellEditing 
-			sortingType : getSortingType(outputFieldModel)
+			sortingType : outputFieldModel.getActualSortingType()
 		});
-	};
-	
-	var getSortingType = function(outputFieldModel)	{
-		if(outputFieldModel.get('sortIndex') == 0) {
-			return EvolveQueryEditor.model.SortingTypeModel.None.get('sortingType');
-		}
-		
-		return outputFieldModel.get('sortingType').get('sortingType');
 	};
 });

@@ -9,6 +9,7 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
     minHeight: 400,
     minWidth: 500,
     width: 500,
+    id: 'qnaWindowSorting',
 
     requires: [
 		'Ext.grid.*',
@@ -48,7 +49,8 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 				    items: [
 						{
 						    xtype: 'gridpanel',
-						    itemId: 'sortingGrid',
+							id: 'qnaGridSorting',
+						    itemId: 'qnaGridSorting',
 						    region: 'center',
 						    plugins: [cellEditing],
 						    store: me.outputFieldsStore,							
@@ -90,8 +92,13 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 									    editable: false,
 									    queryMode: 'local',
 									    displayField: 'sortingType',
-									    valueField: 'sortingType'
+									    valueField: 'sortingTypeId'
+									},
+									renderer : function(value) 
+									{
+										return value.get('sortingType');
 									}
+									
 								}
 						    ]
 						},
@@ -106,14 +113,15 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
                                 {
                                     xtype: 'button',
                                     text: 'Top',
-                                    itemId: 'qnaButtonTop',
+									id: 'qnaButtonMoveToTop',
+                                    itemId: 'qnaButtonMoveToTop',
                                     width: 50,
                                     margin: '5 0 0 5',
                                     listeners:
 									{
 									    click:
 										{
-										    fn: me.onSortingTop,
+										    fn: me.moveToTop,
 										    scope: me
 										}
 									}
@@ -122,13 +130,14 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 								    xtype: 'button',
 								    text: 'Up',
 								    width: 50,
-                                    itemId: 'qnaButtonUp',
+									id: 'qnaButtonMoveUp',
+                                    itemId: 'qnaButtonMoveUp',
 								    margin: '5 0 0 5',
 								    listeners:
 									{
 									    click:
 										{
-										    fn: me.onSortingUp,
+										    fn: me.moveUp,
 										    scope: me
 										}
 									}
@@ -136,14 +145,15 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 								{
 								    xtype: 'button',
 								    text: 'Down',
-									itemId: 'qnaButtonDown',
+									id: 'qnaButtonMoveDown',
+									itemId: 'qnaButtonMoveDown',
 								    width: 50,
 								    margin: '5 0 0 5',
 								    listeners:
 									{
 									    click:
 										{
-										    fn: me.onSortingDown,
+										    fn: me.moveDown,
 										    scope: me
 										}
 									}
@@ -151,14 +161,15 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 								{
 								    xtype: 'button',
 								    text: 'Bottom',
-									itemId: 'qnaButtonBottom',
+									id: 'qnaButtonMoveToBottom',
+									itemId: 'qnaButtonMoveToBottom',
 								    width: 50,
 								    margin: '5 0 0 5',
 								    listeners:
 									{
 									    click:
 										{
-										    fn: me.onSortingBottom,
+										    fn: me.moveToBottow,
 										    scope: me
 										}
 									}
@@ -171,6 +182,7 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 						{
 						    text: 'OK',
 						    scope: me,
+							id: 'qnaButtonOK',
 							itemId: 'qnaButtonOK',
 						    handler: function () {
 						        me.onLookupComplete(me.outputFieldsStore, me.scope);
@@ -179,6 +191,7 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 						},
 						{
 						    text: 'Cancel',
+							id: 'qnaButtonCancel',
 							itemId: 'qnaButtonCancel',
 						    scope: me,
 						    handler: me.close
@@ -192,43 +205,46 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
         me.callParent(arguments);
     },
 
-    sortStore: function (getExchangedRowIndex) {
-        var grid = this.down('#sortingGrid');
+    moveSelectedRow: function (funcGetTargetRowIndexToMove) {
+        var grid = this.down('#qnaGridSorting');
         var selectedRecord = grid.getSelectionModel().getSelection()[0];
-        if (selectedRecord == undefined) return;
+        if (selectedRecord === undefined) return;
 
         var store = grid.store;
-        var exchangedRowIndex = getExchangedRowIndex(store.indexOf(selectedRecord), store);
-        store.remove(selectedRecord);
-        store.insert(exchangedRowIndex, selectedRecord);
-
-        grid.getSelectionModel().deselectAll();
+		var originalRowIndex = store.indexOf(selectedRecord);
+        var targetRowIndex = funcGetTargetRowIndexToMove(originalRowIndex, store.getCount());
+		if(originalRowIndex !== targetRowIndex) {
+			store.remove(selectedRecord);
+			store.insert(targetRowIndex, selectedRecord);
+	
+			grid.getSelectionModel().deselectAll();
+		}
     },
 
-    onSortingUp: function () {
-        this.sortStore(function (selectedRowIndex, store) {
-            return selectedRowIndex == 0 ? 0 : selectedRowIndex - 1;
+    moveUp: function () {
+        this.moveSelectedRow(function (selectedRowIndex, count) {
+            return selectedRowIndex === 0 ? 0 : selectedRowIndex - 1;
         }
 		);
     },
 
-    onSortingDown: function () {
-        this.sortStore(function (selectedRowIndex, store) {
-            return selectedRowIndex == store.getCount() - 1 ? store.getCount() - 1 : selectedRowIndex + 1;
+    moveDown: function () {
+        this.moveSelectedRow(function (selectedRowIndex, count) {
+            return (selectedRowIndex === count - 1) ? count - 1 : selectedRowIndex + 1;
         }
 		);
     },
 
-    onSortingTop: function () {
-        this.sortStore(function (selectedRowIndex, store) {
+    moveToTop: function () {
+        this.moveSelectedRow(function (selectedRowIndex, count) {
             return 0;
         }
 		);
     },
 
-    onSortingBottom: function () {
-        this.sortStore(function (selectedRowIndex, store) {
-            return store.getCount() - 1;
+    moveToBottow: function () {
+        this.moveSelectedRow(function (selectedRowIndex, count) {
+            return count - 1;
         }
 		);
     }

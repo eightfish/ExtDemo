@@ -17,6 +17,7 @@ Ext.define('EvolveQueryEditor.view.ExtractionTypeWindow', {
         'EvolveQueryEditor.model.FieldDataTypeModel'
     ],
 
+    id: 'qnaWindowExtractionType',
     modal: true,
     height: 400,
     itemId: 'ExtractionTypeWindow',

@@ -1,4 +1,4 @@
-﻿/******************************************************
+/******************************************************
 *                      NOTICE
 * 
 * THIS SOFTWARE IS THE PROPERTY OF AND CONTAINS
@@ -32,21 +32,39 @@ Ext.define("EvolveQueryEditor.model.SortingTypeModel", {
            name: 'sortingTypeId',
            type: 'int'
        }
-    ]
+    ],
+    
+    toFormula: function(sortIndex) {
+        return '';
+    }
 
 }, function (Cls) {
     Cls.None = Ext.create('EvolveQueryEditor.model.SortingTypeModel', {
         sortingType: 'None',
         sortingTypeId: 0
     });
-
+   
     Cls.Ascending = Ext.create('EvolveQueryEditor.model.SortingTypeModel', {
         sortingType: 'Ascending',
         sortingTypeId: 1
     });
+    
+    Ext.override(Cls.Ascending, {
+        toFormula: function(sortIndex) {
+            if(sortIndex === 0) return "";
+            return Ext.String.format("S={0}", sortIndex);
+        }
+    });    
 
     Cls.Descending = Ext.create('EvolveQueryEditor.model.SortingTypeModel', {
         sortingType: 'Descending',
         sortingTypeId: 2
+    });
+    
+    Ext.override(Cls.Descending, {
+        toFormula: function(sortIndex) {
+            if(sortIndex === 0) return "";
+            return Ext.String.format("S=({0})", sortIndex);
+        }
     });
 });

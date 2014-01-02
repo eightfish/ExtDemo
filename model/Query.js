@@ -24,7 +24,8 @@ Ext.define('EvolveQueryEditor.model.Query', {
         'EvolveQueryEditor.model.OutputFieldModel',
         'EvolveQueryEditor.store.QueryContextStore',
         'EvolveQueryEditor.store.ProductStore',
-        'EvolveQueryEditor.store.MandatoryFieldsStore'
+        'EvolveQueryEditor.store.MandatoryFieldsStore',
+        'EvolveQueryEditor.model.SortingTypeModel'
     ],
     singleton: true,
     tableCode: '',
@@ -56,6 +57,19 @@ Ext.define('EvolveQueryEditor.model.Query', {
         }
 
         return filtersRet;
+    },
+
+    isAllSuperFieldFiltersSet: function () {
+        if (EvolveQueryEditor.model.Query.filtersStore != undefined) {
+            for (var i = 0; i < EvolveQueryEditor.model.Query.filtersStore.count() ; i++) {
+                var filter = EvolveQueryEditor.model.Query.filtersStore.getAt(i);
+                if (filter.get('superFieldFilter') === true && filter.get('from') === undefined) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     },
 
     getOutputFieldsStore: function () {
@@ -130,34 +144,24 @@ Ext.define('EvolveQueryEditor.model.Query', {
         //template:E={0},X=<sFm2>{{_sf_}}{1}</sFm2>,S={2},O={3}"
 
         var extractValue = outputField.get("extractType");
+        var extractIntValue = extractValue.get('intValue');
         if (extractValue === EvolveQueryEditor.model.ExtractionTypeModel.Segment) {
             //Segment will be 10203 if the offset is 2 and length is 3.
-            extractValue += outputField.get("segmentOffset") * 100;
-            extractValue += outputField.get("segmentLength");
+            extractIntValue += outputField.get("segmentOffset") * 100;
+            extractIntValue += outputField.get("segmentLength");
         }
         //If ReverseSign is true, the - will be added. for example, -2.
-        var extractionTypeWithReverseSign = Ext.String.format("{0}{1}", outputField.get("reverseSign") ? "-" : "", extractValue.get('intValue'));
+        var extractionTypeWithReverseSign = Ext.String.format("{0}{1}", outputField.get("reverseSign") ? "-" : "", extractIntValue);
 
         var scalingFactor = outputField.get("scalingFactor");
 
-        var sortIndexWithSortMode = "";
-
-        var sortIndex = outputField.get("sortIndex");
-        if (sortIndex === 0) {
-            //for those fields in summary/detail link and none-sorting fields in summary/detail report, sortIndex=0 ,sortIndex part should not exist in formula.
+        var sortIndex = outputField.get("sortIndex");        
+        var sortingFormulaPart = outputField.get("sortingType").toFormula(sortIndex);
+        if(sortingFormulaPart !== '') { 
+            sortingFormulaPart = sortingFormulaPart + ",";
         }
-        else {
-            //SortMode=ascending,sortIndex=2,sortIndexWithSortMode=2
-            //SortMode=descending,sortIndex=2,sortIndexWithSortMode=(2)
-            if (outputField.get("sortMode") == "IS_DESCENDING") {
-                sortIndexWithSortMode = Ext.String.format("({0})", sortIndex);
-            }
-            else {
-                sortIndexWithSortMode = Ext.String.format("{0}", sortIndex);
-            }
-        }
-
-        var ret = Ext.String.format("{0}{1}{2}{3}", Ext.String.format("E={0},", extractionTypeWithReverseSign), this.stringIsEmpty(scalingFactor) ? "" : Ext.String.format("X=<sFm2>{{_sf_}}{0}</sFm2>,", scalingFactor), this.stringIsEmpty(sortIndexWithSortMode) ? "" : Ext.String.format("S={0},", sortIndexWithSortMode), Ext.String.format("O={0}", outputField.get("codePath")));
+        
+        var ret = Ext.String.format("{0}{1}{2}{3}", Ext.String.format("E={0},", extractionTypeWithReverseSign), this.stringIsEmpty(scalingFactor) ? "" : Ext.String.format("X=<sFm2>{{_sf_}}{0}</sFm2>,", scalingFactor), sortingFormulaPart, Ext.String.format("O={0}", outputField.get("codePath")));
         return ret;
     },
 
@@ -256,7 +260,7 @@ Ext.define('EvolveQueryEditor.model.Query', {
     },
 
     getProductStore: function () {
-        if (EvolveQueryEditor.model.Query.getQueryType() !== undefined && EvolveQueryEditor.store.ProductStore.Instance.count() === 0) {
+        if (EvolveQueryEditor.model.Query.getQueryType() !== undefined) {
             EvolveQueryEditor.store.ProductStore.Instance.load({
                 callback: function (records, operation, success) {
                 }
@@ -267,7 +271,7 @@ Ext.define('EvolveQueryEditor.model.Query', {
     },
 
     getSuperFiltersStore: function(callbackAfterLoad){
-        if (EvolveQueryEditor.model.Query.getProductCode() !== undefined && EvolveQueryEditor.store.SuperFieldsStore.Instance.count() === 0) {
+        if (EvolveQueryEditor.model.Query.getProductCode() !== undefined) {
             EvolveQueryEditor.store.SuperFieldsStore.Instance.load({
                 callback: function (records, operation, success) {
                     callbackAfterLoad(records);
@@ -279,7 +283,7 @@ Ext.define('EvolveQueryEditor.model.Query', {
     },
 
     getMandatoryFiltersStore: function (callbackAfterLoad) {
-        if (EvolveQueryEditor.model.Query.getProductCode() !== undefined && EvolveQueryEditor.model.Query.tableCode !== undefined && EvolveQueryEditor.store.MandatoryFieldsStore.Instance.count() === 0) {
+        if (EvolveQueryEditor.model.Query.getProductCode() !== undefined && EvolveQueryEditor.model.Query.tableCode !== undefined) {
             EvolveQueryEditor.store.MandatoryFieldsStore.Instance.load({
                 callback: function (records, operation, success) {
                     callbackAfterLoad(records);

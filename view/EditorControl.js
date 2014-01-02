@@ -46,6 +46,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         'EvolveQueryEditor.store.QueryContextStore',
 
         'EvolveQueryEditor.view.BasicLookupWindow',
+        'EvolveQueryEditor.view.PeriodLookupWindow',
         'EvolveQueryEditor.view.TableTreeLookupWindow',
         'EvolveQueryEditor.view.EvolveProgressDialog',
         "EvolveQueryEditor.view.ExtractionTypeWindow",
@@ -57,6 +58,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
     layout: 'border',
     width: 717,
     height: 555,
+    id: 'qnaPanelQueryEditor',
 
     /**
      * @cfg {Infor.BI.dashboards.IDialogContainer} dialogContainer Reference to object providing dashboard functionality. (required)
@@ -168,12 +170,6 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                             }
                                         }
                                     ]
-                                },
-                                {
-                                    xtype: 'label',
-                                    margins: '10 10 10 10',
-                                    region: 'center',
-                                    text: 'Here would be some general help text for the user so that they know what they have got to do next - e.g. "Please select the Product"'
                                 }
                             ]
                         },
@@ -201,15 +197,26 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                                 var filterType = record.get('codePath');
                                                 if (filterType == 'TABLE') {
                                                     // Perform a table lookup ...
-                                                    var lookupWindow = EvolveQueryEditor.view.TableTreeLookupWindow.create();
-                                                    lookupWindow.scope = me;
-                                                    lookupWindow.record = record;
+                                                    var lookupWindow = EvolveQueryEditor.view.TableTreeLookupWindow.Instance;
+                                                    lookupWindow.viewFilters = me.down('#gridFilters');
+
+                                                    // It would appear that the record passed in is a clone from the store ...
+                                                    // ... edit operations need to operate on the one in the store so find it
+                                                    // ... and use that instead ...
+                                                    var storeRecordIndex = lookupWindow.viewFilters.store.findExact('codePath', record.get('codePath'));
+                                                    lookupWindow.filterModelIndex = storeRecordIndex;
                                                     lookupWindow.onLookupComplete = me.onTableLookupComplete;
+                                                    lookupWindow.scope = me;
                                                     lookupWindow.show();
                                                 }
                                                 else {
                                                     // Perform a general lookup ...
-                                                    var lookupWindow = EvolveQueryEditor.view.BasicLookupWindow.Instance;
+                                                    var lookupWindow;
+                                                    if (record.get('dataType') === 'time') {
+                                                        lookupWindow = EvolveQueryEditor.view.PeriodLookupWindow.Instance;
+                                                    } else {
+                                                        lookupWindow = EvolveQueryEditor.view.BasicLookupWindow.Instance;
+                                                    }
                                                     lookupWindow.viewFilters = me.down('#gridFilters');
 
                                                     // It would appear that the record passed in is a clone from the store ...
@@ -235,7 +242,15 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                     xtype: 'gridcolumn',
                                     dataIndex: 'from',
                                     text: 'Filter Value From',
-                                    flex: 25
+                                    flex: 25,
+                                    editor:
+									{
+									    xtype: 'textfield',
+									    id: 'qnaTextFieldFilterFrom',
+									    x: 120,
+									    y: 10,
+									    labelWidth: 50
+									}
                                 },
                                 {
                                     xtype: 'actioncolumn',
@@ -250,7 +265,15 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                     xtype: 'gridcolumn',
                                     dataIndex: 'to',
                                     text: 'Filter Value To',
-                                    flex: 25
+                                    flex: 25,
+                                    editor:
+									{
+									    xtype: 'textfield',
+									    id: 'qnaTextFieldFilterTo',
+									    x: 120,
+									    y: 10,
+									    labelWidth: 50
+									}
                                 },
                                 {
                                     xtype: 'actioncolumn',
@@ -469,59 +492,50 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
 		var index = 0;
 		sortedStore.each(function(sortingModel){
 			var match = outputFieldsStore.findBy(function(record,id) {
-				if(record.get('extractType') == sortingModel.get('extractType') && record.get('codePath') == sortingModel.get('codePath'))
+				if(record.get('extractType') === sortingModel.get('extractType') && record.get('codePath') === sortingModel.get('codePath'))
 					return true;
 				});	
 				
-			if(match == -1) {
-				EvolveQueryEditor.util.QAALogger.error('The outputFields Store is not integrated');			
-				return;
+			if(match === -1) {
+				var codePath = sortingModel.get('codePath');
+				var extractType = sortingModel.get('extractType').get('description');
+				EvolveQueryEditor.util.QAALogger.error('The outputField [codepath:' + codePath + ', extractionType:' + extractType + '] exists in sorting dialog but doesn\'t exist in report dialog');			
+				return; 
 			}
 			
-			if(sortingModel.get('sortingType') == EvolveQueryEditor.model.SortingTypeModel.None.get('sortingType')){
-				outputFieldsStore.getAt(match).set('sortIndex', 0);
-				outputFieldsStore.getAt(match).set('sortingType', EvolveQueryEditor.store.SortingTypeStore.Ascending);	
+			var matchedOutputField = outputFieldsStore.getAt(match);
+			
+			var sortingType = sortingModel.get('sortingType');
+			if(sortingType === EvolveQueryEditor.model.SortingTypeModel.None){
+				matchedOutputField.clearSorting();
 			}
 			else
 			{
-				outputFieldsStore.getAt(match).set('sortIndex', ++index);
-				outputFieldsStore.getAt(match).set('sortingType', EvolveQueryEditor.store.SortingTypeStore.Instance.findRecord('sortingType',sortingModel.get('sortingType')));
+				matchedOutputField.setSorting(sortingType, ++index);
 			}
-			
-			outputFieldsStore.getAt(match).set('sortOptionDescription', '');  // enforce to refresh this field 
 		});
-       
-        grid.getView().refresh();
     },
 
     onPopupSortingWindowClick: function () {
-		//convert each OutputFieldModel in the store to a OutputFieldSortingModel
-        //then create a store using these OutputFieldSortingModel objects
-        //pass this store to sortingWindow for manipulation
+
         var store = EvolveQueryEditor.model.Query.getOutputFieldsStore();
-		if (store.getCount() == 0) return;
+		if (store.getCount() == 0) {
+			//TODO: popup a dialog or even disable the sorting button when there' no output field added yet
+			return;
+		}
 		
-		//TODO: this logic maybe move into proxy 
-		var outputFieldSortingModelList = [];
-        store.each(function(model) {
-			var outputFieldSortingModel = EvolveQueryEditor.model.OutputFieldSortingModel.convertFromOuputFieldModel(model);
-			outputFieldSortingModelList.push(outputFieldSortingModel);
-		});
+		var nonSortedFields = store.queryBy(function(m, id) {return m.get('sortIndex') === 0});
+		var sortedFields = store.queryBy(function(m, id) { return m.get('sortIndex') !== 0});
+		sortedFields.sortBy(function(a, b) {return a.get('sortIndex') > b.get('sortIndex')});
+		var allfields = sortedFields.getRange().concat(nonSortedFields.getRange());
 		
+		//TODO: this logic maybe move into a customized proxy 
 		var outputFieldSortingStore = Ext.create('Ext.data.Store', {
                 model: "EvolveQueryEditor.model.OutputFieldSortingModel",
-				data: outputFieldSortingModelList,
-                proxy: {
-                    type: 'memory',
-                    reader: {
-                        type: 'json',
-                        root: 'items'
-                    }
-                },
-				sorters:[{
-					property:'sortIndex',
-					direction: 'ASC'
-				}]
+		});
+        allfields.forEach(function(model) {
+			var outputFieldSortingModel = EvolveQueryEditor.model.OutputFieldSortingModel.convertFromOuputFieldModel(model);
+			outputFieldSortingStore.add(outputFieldSortingModel);
 		});
 		
         var sortingWindow = Ext.create('EvolveQueryEditor.view.SortingWindow', {
@@ -669,6 +683,9 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         this.down('#cbProducts').enable();
         var model = EvolveQueryEditor.model.Query;
         model.reportType = rt;
+
+        //Clear output fields.
+        this.clearOutputFields();
     },
 
     onCbProductsSelect: function (combo, records, eOpts) {
@@ -845,6 +862,6 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
     },
 
     getQueryDefinition: function () {
-        return Ext.String.format("<?xml version=\"1.0\" encoding=\"utf-8\"?><PersistentEvolveQuery xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">  <Bindings />  <Formula>=QAA_DR(\"{0}\",)</Formula></PersistentEvolveQuery>", EvolveQueryEditor.model.Query.queryToFormula())
+        return Ext.String.format("<?xml version=\"1.0\" encoding=\"utf-8\"?><PersistentEvolveQuery xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">  <Bindings />  <Formula>={0}(\"{1}\",)</Formula></PersistentEvolveQuery>", EvolveQueryEditor.model.Query.reportType.toFormula(), EvolveQueryEditor.model.Query.queryToFormula())
     }
 });

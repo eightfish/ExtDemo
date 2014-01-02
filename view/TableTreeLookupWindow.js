@@ -24,6 +24,7 @@ Ext.define('EvolveQueryEditor.view.TableTreeLookupWindow', {
 
     height: 322,
     itemId: 'TableTreeLookupWindow',
+    id: 'qnaWindowTableLookup',
     width: 400,
     layout: {
         type: 'border'
@@ -81,31 +82,35 @@ Ext.define('EvolveQueryEditor.view.TableTreeLookupWindow', {
         //this.down('#treeTables').store.load();
 
         var parent = this;
-        var grid = this.down('#treeTables');
+        var storeModel = parent.viewFilters.store.getAt(parent.filterModelIndex);
+        if (storeModel.isTablesSet !== true) { //!== true means undefined
+            var grid = this.down('#treeTables');
 
-        grid.setLoading(true, "Loading Table hierarchy ...");
-        
-        Ext.Ajax.request({
-            url: EvolveQueryEditor.model.Query.serverUrlBase + '&method=LookupTables',
-            jsonData: {
-                clientToken: EvolveQueryEditor.model.Query.clientToken,
-                query: {
-                    productCode: EvolveQueryEditor.model.Query.getProductCode(),
-                    tableCode: '',
-                    mode: EvolveQueryEditor.model.Query.getQueryType(),
-                    filters: EvolveQueryEditor.model.Query.getFilters()
+            grid.setLoading(true, "Loading Table hierarchy ...");
+
+            Ext.Ajax.request({
+                url: EvolveQueryEditor.model.Query.serverUrlBase + '&method=LookupTables',
+                jsonData: {
+                    clientToken: EvolveQueryEditor.model.Query.clientToken,
+                    query: {
+                        productCode: EvolveQueryEditor.model.Query.getProductCode(),
+                        tableCode: '',
+                        mode: EvolveQueryEditor.model.Query.getQueryType(),
+                        filters: EvolveQueryEditor.model.Query.getFilters()
+                    }
+                },
+                success: function (response) {
+                    grid.setLoading(false);
+                    var data = Ext.decode(response.responseText);
+                    storeModel.isTablesSet = true;
+                    parent.down('#treeTables').setRootNode(data.data);
+                },
+                failure: function (response, options) {
+                    grid.setLoading(false);
+                    alert(response.statusText);
                 }
-            },
-            success: function (response) {
-                grid.setLoading(false);
-                var data = Ext.decode(response.responseText);
-                parent.down('#treeTables').setRootNode(data.data);
-            },
-            failure: function (response, options) {
-                grid.setLoading(false);
-                alert(response.statusText);
-            }
-        });
+            });
+        }
     },
     
     itemSelect: function(grid, record, item, index, e, eOpts) {
@@ -115,4 +120,6 @@ Ext.define('EvolveQueryEditor.view.TableTreeLookupWindow', {
         
         this.onLookupComplete(this.scope);
     }
+}, function (Cls) {
+    Cls.Instance = EvolveQueryEditor.view.TableTreeLookupWindow.create();
 });

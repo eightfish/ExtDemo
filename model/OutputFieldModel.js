@@ -11,10 +11,6 @@ Ext.define('EvolveQueryEditor.model.OutputFieldModel', {
             type: 'string'
         },
         {
-            name: 'sortIndex',
-            type: 'int'
-        },
-        {
             name: 'reverseSign',
             type: 'boolean'
         },
@@ -54,20 +50,50 @@ Ext.define('EvolveQueryEditor.model.OutputFieldModel', {
             name: 'fieldName',
             type: 'string'
         },
-	{
+		{
             name: 'sortingType',
-            type: 'auto'
+            type: 'auto',
+			defaultValue: EvolveQueryEditor.model.SortingTypeModel.Ascending
+        },
+        {
+            name: 'sortIndex',
+            type: 'int',
+			defaultValue: 0
         },
 		{
 			name:'sortOptionDescription',
 			type:'string',
-			convert: function (value, record) {
-				if(record.get('sortIndex') == 0){
-					return '';
-				}
-				
-				return record.get('sortingType').get('sortingType') + ' ' + record.get('sortIndex');
-            }
+			defaultValue: ''
 		}
-    ]
+    ],
+	
+	refreshSortDescription: function() {
+		var sortDesc = '';
+		
+		if(this.get('sortIndex') !== 0){
+			sortDesc = this.get('sortingType').get('sortingType') + ' ' + this.get('sortIndex');
+		}
+		
+		this.set('sortOptionDescription', sortDesc);
+	},
+	
+	clearSorting: function() {
+		this.set('sortIndex', 0);
+		this.set('sortingType', EvolveQueryEditor.model.SortingTypeModel.Ascending);	
+		this.refreshSortDescription();
+	},
+	
+	setSorting: function(sortingType, sortIndex) {
+		this.set('sortIndex', sortIndex);
+		this.set('sortingType', sortingType);
+		this.refreshSortDescription();
+	},
+	
+	getActualSortingType: function() {
+		if(this.get('sortIndex') === 0 || this.get('sortingType') === undefined) {
+			return EvolveQueryEditor.model.SortingTypeModel.None;
+		}
+		
+		return this.get('sortingType');
+	}
 });
