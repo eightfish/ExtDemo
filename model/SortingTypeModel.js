@@ -67,4 +67,27 @@ Ext.define("EvolveQueryEditor.model.SortingTypeModel", {
             return Ext.String.format("S=({0})", sortIndex);
         }
     });
+    
+    Cls.parseFromString = function(str) {
+        var sortingType = EvolveQueryEditor.model.SortingTypeModel.None;
+        var sortIndex = 0;
+        
+        if(!Ext.isEmpty(str)) {
+            var len = str.length;
+            var descending = (str[0] === '(' && str[len-1] === ')');
+            if(descending) {
+                str = str.substring(1, len-1);
+            }
+            var temp = parseInt(str);
+            if(Ext.isNumber(sortIndex)) {
+                sortIndex = temp;
+                sortingType = descending? EvolveQueryEditor.model.SortingTypeModel.Descending : EvolveQueryEditor.model.SortingTypeModel.Ascending;
+            }
+        }
+        
+        return {
+            sortingType: sortingType,
+            sortIndex: sortIndex
+        }
+    }
 });

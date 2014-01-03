@@ -67,21 +67,19 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
     dialogContainer: undefined,
 
     initComponent: function () {
+        this.dialogContainer.UX.showLoadingMask("Loading...");
         var me = this;
 
         var proxyUrl = me.dialogContainer.getActionUrl('EvolveProxy', 'Index', { aliasName: me.dialogConfig.aliasName }),
                     loginUrl = me.dialogContainer.getActionUrl('EvolveProxy', 'Login', { aliasName: me.dialogConfig.aliasName, connectionInfo: me.dialogConfig.connectionInfo });
 
         if (EvolveQueryEditor.model.Query.clientToken == undefined) {
-            EvolveQueryEditor.view.EvolveProgressDialog.SetProgressText('Logging into Evolve Server ...');
-            EvolveQueryEditor.view.EvolveProgressDialog.show();
 
             Ext.Ajax.request({
                 url: loginUrl,
                 timeout: 60000,
                 async: false, 
                 success: function (result, options) {
-                    EvolveQueryEditor.view.EvolveProgressDialog.hide();
                     var res = Ext.decode(result.responseText);
                     var model = EvolveQueryEditor.model.Query;
                     model.clientToken = res.data.ClientToken;
@@ -90,7 +88,6 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
 
                 },
                 failure: function (result, options) {
-                    EvolveQueryEditor.view.EvolveProgressDialog.hide();
                     alert(result.statusText);
                 }
             });
@@ -447,7 +444,12 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                         fn: me.onOutputRowDblClick,
                                         scope: me
                                     }
-                                }
+                                },
+								
+								plugins : {
+									ptype : 'gridviewdragdrop',
+									dragText : 'Reorder Output Fields'
+						    	}
                             },
                             columns: [
                                 {
@@ -478,7 +480,8 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         if (EvolveQueryEditor.model.Query.tableCode.length > 0) {
             me.loadFieldsTree();
         }
-        
+
+        this.dialogContainer.UX.hideLoadingMask();
     },
 
     onOutputRowKeyPress: function (view, record, item, index, key) {
@@ -876,12 +879,12 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                 if (matches.length === 2) {
                     return EvolveQueryEditor.model.Query.queryFromFormula(matches[1]);
                 } else {
-                    EvolveQueryEditor.util.QAALogger.error(Ext.String.format("The given query definition is not correct: {0}"), queryDefinition);
+                    EvolveQueryEditor.util.QAALogger.error(Ext.String.format("The given query definition is not correct: {0}", queryDefinition));
                     return false;
                 }
             }
         } catch (err) {
-            EvolveQueryEditor.util.QAALogger.error(Ext.String.format("The given query definition is not correct: {0}. The error is: {1}"), queryDefinition, err.message);
+            EvolveQueryEditor.util.QAALogger.error(Ext.String.format("The given query definition is not correct: {0}. The error is: {1}", queryDefinition, err.message));
             return false;
         }
     },

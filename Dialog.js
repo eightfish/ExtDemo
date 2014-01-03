@@ -9,8 +9,6 @@
     editorControl: undefined,
 
     getContent: function () {
-        this.dialogContainer.UX.hideLoadingMask();
-
         if(this.editorControl === undefined){
             this.editorControl = Ext.create('EvolveQueryEditor.view.EditorControl', {
                 dialogContainer: this.dialogContainer,

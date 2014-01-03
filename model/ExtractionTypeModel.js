@@ -37,83 +37,99 @@ Ext.define("EvolveQueryEditor.model.ExtractionTypeModel", {
     }
 
 }, function(Cls) {
+	
+	var extractionTypesDic = new Ext.util.HashMap();
+	
     Cls.None = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_NONE",
         description: "None",
         intValue: 0
     });
+	extractionTypesDic.add(Cls.None.get("intValue"),Cls.None);
     
     Cls.Segment = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_SEGMENT",
         description: "Segment",
         intValue: 10000
     });
+	extractionTypesDic.add(Cls.Segment.get("intValue"),Cls.Segment);
     
     Cls.Count = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_COUNT",
         description: "Count",
         intValue: 2
     });
+	extractionTypesDic.add(Cls.Count.get("intValue"),Cls.Count);
     
     Cls.Min = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_MIN",
         description: "Min",
         intValue: 4
     });
+	extractionTypesDic.add(Cls.Min.get("intValue"),Cls.Min);
     
     Cls.Max = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_MAX",
         description: "Max",
         intValue: 5
     });
+	extractionTypesDic.add(Cls.Max.get("intValue"),Cls.Max);
     
     Cls.DistinctCount = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_DISTINCT_COUNT",
         description: "Distinct Count",
         intValue: 7
     });
+    extractionTypesDic.add(Cls.DistinctCount.get("intValue"),Cls.DistinctCount);
     
     Cls.Average = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_AVERAGE",
         description: "Average",
         intValue: 3
     });
+	extractionTypesDic.add(Cls.Average.get("intValue"),Cls.Average);
     
     Cls.DistinctAverage = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_DISTINCT_AVERAGE",
         description: "Distinct Average",
         intValue: 8
     });
+    extractionTypesDic.add(Cls.DistinctAverage.get("intValue"),Cls.DistinctAverage);
     
     Cls.Sum = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_SUM",
         description: "Sum",
         intValue: 1
     });
+	extractionTypesDic.add(Cls.Sum.get("intValue"),Cls.Sum);
     
     Cls.DistinctSum = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_DISTINCT_SUM",
         description: "Distinct Sum",
         intValue: 6
     });
+    extractionTypesDic.add(Cls.DistinctSum.get("intValue"),Cls.DistinctSum);
     
     Cls.Code = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_LOOKUP_CODE",
         description: "Code",
         intValue: 20
     });
+	extractionTypesDic.add(Cls.Code.get("intValue"),Cls.Code);
 
     Cls.Description = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_LOOKUP_DESC",
         description: "Description",
         intValue: 21
     });
+	extractionTypesDic.add(Cls.Description.get("intValue"),Cls.Description);
 
     Cls.ShortDescription = Ext.create("EvolveQueryEditor.model.ExtractionTypeModel", {
         name: "IS_LOOKUP_SHORT_DESC",
         description: "Short Description",
         intValue: 22
     });
+	extractionTypesDic.add(Cls.ShortDescription.get("intValue"),Cls.ShortDescription);
     
     var extractionTypesForFixedLookupField = [EvolveQueryEditor.model.ExtractionTypeModel.Code, EvolveQueryEditor.model.ExtractionTypeModel.Description, EvolveQueryEditor.model.ExtractionTypeModel.ShortDescription];
 
@@ -192,5 +208,9 @@ Ext.define("EvolveQueryEditor.model.ExtractionTypeModel", {
 
         return availableExtractTypes;
     };
+	
+	Cls.parseFromValue = function(intValue){
+		return extractionTypesDic.get(intValue);
+	};
     
 });

@@ -35,6 +35,7 @@ Ext.define('EvolveQueryEditor.view.FilterOptionsWindow', {
              items: [{
                     xtype: 'form',
 				    width: 450,
+					bodyPadding: 10,
                     items: [{
                         xtype: 'panel',
                         layout: 'column',
@@ -56,12 +57,12 @@ Ext.define('EvolveQueryEditor.view.FilterOptionsWindow', {
                                 	labelAlign: 'right',
 									anchor: '80%'
                                 }]
-                            },{   
+                            },{
 								xtype: 'fieldset',
 								id: 'qnaFieldsetComparisonOperator',
 								title: 'Comparison Operator',
 								autoHeight: true,
-								bodyPadding: 5,
+								style:'margin:10px', 
 								defaultType: 'radio',
 								layout: 'vbox',
 								items:[
@@ -75,7 +76,21 @@ Ext.define('EvolveQueryEditor.view.FilterOptionsWindow', {
 									{ boxLabel: 'Is null', name: 'qnaRadioButtonComparisonOperator', inputValue: '8' },
 									{ boxLabel: 'Not null', name: 'qnaRadioButtonComparisonOperator', inputValue: '9' }
 								]
-							}]
+							}, {
+								xtype: 'fieldset',
+								id: 'qnaFieldsetFilterModel',
+								title: 'Mode',
+								style:'margin:10px', 
+								autoHeight: true,
+								defaultType: 'radio',
+								layout: 'vbox',
+								items:[
+									{ boxLabel: 'Default', name: 'qnaRadioButtonFilterMode', inputValue: '1', checked: true},
+									{ boxLabel: 'Combinations', name: 'qnaRadioButtonFilterMode', inputValue: '2' },
+									{ boxLabel: 'Literal', name: 'qnaRadioButtonFilterMode', inputValue: '3' }
+								]
+							}
+							]
                             }],
                     }],
                     buttonAlign: 'center',

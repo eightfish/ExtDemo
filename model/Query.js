@@ -25,7 +25,8 @@ Ext.define('EvolveQueryEditor.model.Query', {
         'EvolveQueryEditor.store.QueryContextStore',
         'EvolveQueryEditor.store.ProductStore',
         'EvolveQueryEditor.store.MandatoryFieldsStore',
-        'EvolveQueryEditor.model.SortingTypeModel'
+        'EvolveQueryEditor.model.SortingTypeModel',
+        'EvolveQueryEditor.model.OutputFieldModel'
     ],
     singleton: true,
     tableCode: '',
@@ -198,14 +199,17 @@ Ext.define('EvolveQueryEditor.model.Query', {
 
         var matches = formula.match(/=(.+)\(\"=(.+)\)/);
         if (matches.length === 3) {
-            this.reportType = EvolveQueryEditor.model.ReportTypeModel.getReportType(matches[1]);
-            var matches1 = matches[2].match(/(\d+),(\d+),(\w+),(\w+)(?:,\*={P}1|,\*=[YNyn])?(?:,(F=[^,]+,(?:T=[^,]+,)?K=[^,]+))*,?(?:,((?:C=[^,]+?,)?E=-?\d+,(?:X=<sFm2>{_sf_}[\+\-\/\*]\d+(?:\.\d+)?<\/sFm2>,)?(?:S=\(?\d+\)?,)?O=[^,]+))+(,RT=(-?\d)+,RF=([0-1]{9})(?:,AF=[01])?)?(,TP=(\d+%?)?)?(,XLBVal:(\d+)=(.*))?/);
-
+	   		var reportTypeInMatch = matches[1];
+			var reportContentInMatch = matches[2];            
+			this.reportType = EvolveQueryEditor.model.ReportTypeModel.getReportType(reportTypeInMatch);
+            var matches1 = reportContentInMatch.match(/(\d+),(\d+),(\w+),(\w+)(?:,\*={P}1|,\*=[YNyn])?(?:,(F=[^,]+,(?:T=[^,]+,)?K=[^,]+))*,?(?:,((?:C=[^,]+?,)?E=-?\d+,(?:X=<sFm2>{_sf_}[\+\-\/\*]\d+(?:\.\d+)?<\/sFm2>,)?(?:S=\(?\d+\)?,)?O=[^,]+))+(,RT=(-?\d)+,RF=([0-1]{9})(?:,AF=[01])?)?(,TP=(\d+%?)?)?(,XLBVal:(\d+)=(.*))?/);
+			var productInMatch = matches1[3];
+			var tableInMatch = matches1[4];
             this.product = Ext.create('EvolveQueryEditor.model.ProductModel', {
-                Code: matches1[3]
+                Code: productInMatch
             });
             
-            var filtersStore = EvolveQueryEditor.model.Query.getFilterStore();
+            var filtersStore = this.getFilterStore();
             filtersStore.removeAll();
 
             //Set table code firstly, so that the following steps can use the table code to take the query. For example, loading the selection list. Otherwsie, the table code will be set in callback after retrieving the super filters.
@@ -215,23 +219,25 @@ Ext.define('EvolveQueryEditor.model.Query', {
                 codePath: 'TABLE',
             });
             filtersStore.add(modelTable);
-            EvolveQueryEditor.model.Query.setTable(matches1[4], matches1[4], matches1[4]);
+            this.setTable(tableInMatch, tableInMatch, tableInMatch);
+
+			var regExpForFilter = /(F=[^,]+,(?:T=[^,]+,)?K=[^,]+)/;
+            var matches2 = reportContentInMatch.match(new RegExp(regExpForFilter.source, "g"));
+            var filterMap = new Ext.util.HashMap();
+            for(var i=0; i<matches2.length; i++){
+                var matches3 = matches2[i].match(regExpForFilter);
+                filterMap.add(matches3[3], { from: me.removeQuoteIfPossible(matches3[1]), to: me.removeQuoteIfPossible(matches3[2]) })
+            }
 
             //Add super filters
-            EvolveQueryEditor.model.Query.getSuperFiltersStore(function (records) {
-                var matches2 = matches[2].match(/(F=[^,]+,(?:T=[^,]+,)?K=[^,]+)/g);
-                var map = new Ext.util.HashMap();
-                for(var i=0; i<matches2.length; i++){
-                    var matches3 = matches2[i].match(/F=([^,]+),(?:T=([^,]+),)?K=([^,]+)/);
-                    map.add(matches3[3], { from: me.removeQuoteIfPossible(matches3[1]), to: me.removeQuoteIfPossible(matches3[2]) })
-                }
+            this.getSuperFiltersStore(function (records) {
                 for (var rowIndex = 0; rowIndex < records.length; rowIndex++) {
                     if (records[rowIndex].get('from') == '') {
                         records[rowIndex].set('from', undefined);  // No default - so make it really no value
                     }
-                    if(map.get(records[rowIndex].get('codePath')) !== undefined){
-                        records[rowIndex].set('from', map.get(records[rowIndex].get('codePath')).from);
-                        records[rowIndex].set('to', map.get(records[rowIndex].get('codePath')).to);
+                    if(filterMap.get(records[rowIndex].get('codePath')) !== undefined){
+                        records[rowIndex].set('from', filterMap.get(records[rowIndex].get('codePath')).from);
+                        records[rowIndex].set('to', filterMap.get(records[rowIndex].get('codePath')).to);
                     }
                     records[rowIndex].set('superFieldFilter', true);
                     filtersStore.insert(rowIndex, records[rowIndex]);
@@ -239,17 +245,28 @@ Ext.define('EvolveQueryEditor.model.Query', {
 
  
                 //Add filters
-                EvolveQueryEditor.model.Query.getMandatoryFiltersStore(function (rs) {
+                me.getMandatoryFiltersStore(function (rs) {
                     for (var row = 0; row < rs.length; row++) {
                         if (rs[row].get('from') == '') {
                             rs[row].set('from', undefined);  // No default - so make it really no value
                         }
-                        if (map.get(rs[row].get('codePath')) !== undefined) {
-                            rs[row].set('from', map.get(rs[row].get('codePath')).from);
-                            rs[row].set('to', map.get(rs[row].get('codePath')).to);
+                        if (filterMap.get(rs[row].get('codePath')) !== undefined) {
+                            rs[row].set('from', filterMap.get(rs[row].get('codePath')).from);
+                            rs[row].set('to', filterMap.get(rs[row].get('codePath')).to);
                         }
                         filtersStore.add(rs[row]);
                     }
+
+					//add outputfields
+					var outputFieldStore = me.getOutputFieldsStore();
+					outputFieldStore.removeAll();
+					var outputFiledModels = EvolveQueryEditor.model.OutputFieldModel.parseAllFromString(reportContentInMatch);
+					
+					//TODO: parseAllFromString triggers multiple async webservice invocation inside. It should delay adding output field to store after all the invocations are finished.
+					//further more in this method there're webservice invocations for super field, mandatory fields and output fields. We should make them into one web servcie by
+					//passing the formula to the server-side and get all necessary informaiton 
+					outputFieldStore.add(outputFiledModels);
+
                 });
             });
 
