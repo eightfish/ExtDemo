@@ -309,7 +309,7 @@ Ext.define("EvolveQueryEditor.util.PeriodUtils", {
         getNextPeriod: function (currentPeriodValue, data) {
             currentPeriodValue = parseInt(currentPeriodValue, 10);
             var matched;
-            Ext.each(data.Values, function (index, period) {
+            Ext.each(data.Values, function (period, index) {
                 if (period.Value === currentPeriodValue) {
                     matched = index + 1;
                     return false;
@@ -321,7 +321,7 @@ Ext.define("EvolveQueryEditor.util.PeriodUtils", {
         getPreviousPeriod: function (currentPeriodValue, data) {
             var matched;
             currentPeriodValue = parseInt(currentPeriodValue, 10);
-            Ext.each(data.Values, function (index, period) {
+            Ext.each(data.Values, function (period, index) {
                 if (period.Value === currentPeriodValue) {
                     return false;
                 } else {
@@ -339,7 +339,7 @@ Ext.define("EvolveQueryEditor.util.PeriodUtils", {
         getFirstPeriod: function (currentPeriodValue, data) {
             var targetYear = currentPeriodValue.slice(0, 4);
             var matched;
-            Ext.each(data.Values, function (index, period) {
+            Ext.each(data.Values, function (period, index) {
                 if (EvolveQueryEditor.util.PeriodUtils.processPeriod(period.Value).slice(0, 4) === targetYear) {
                     matched = period;
                     return false;
@@ -351,7 +351,7 @@ Ext.define("EvolveQueryEditor.util.PeriodUtils", {
         getLastPeriod: function (currentPeriodValue, data) {
             var targetYear = currentPeriodValue.slice(0, 4);
             var matched;
-            Ext.each(data.Values, function (index, period) {
+            Ext.each(data.Values, function (period, index) {
                 if (EvolveQueryEditor.util.PeriodUtils.processPeriod(period.Value).slice(0, 4) > targetYear) {
                     return false;
                 } else {

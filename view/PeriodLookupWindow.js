@@ -290,9 +290,6 @@ Ext.define('EvolveQueryEditor.view.PeriodLookupWindow', {
         cbxPeriodTo.setDisabled(false);
         cbxPeriodTo.setVisible(!_single);
 
-        txtPeriodFromOffset.setValue(0);
-        txtPeriodToOffset.setValue(0);
-        txtPeriodOffset.setValue(0);
         txtPeriodFromOffset.setVisible(true);
         txtPeriodToOffset.setVisible(true);
         //$.setHidden($("#divPeriod"), false);
@@ -341,8 +338,15 @@ Ext.define('EvolveQueryEditor.view.PeriodLookupWindow', {
         txtPeriodToOffset.setVisible((periodData.IsOffSet2Visible && !_single));
         txtPeriodOffset.setVisible(periodData.IsOffSet3Visible && !_single);
 
-        txtPeriodFromOffset.setValue(_periodInfo.offset1);
-        txtPeriodToOffset.setValue(_periodInfo.offset2);
+        if (_periodInfo.offset1 < 0) {
+            //Setting offset1 to be less than 0 is valid while offset2 is 0.
+            txtPeriodFromOffset.setValue(_periodInfo.offset1);
+            txtPeriodToOffset.setValue(_periodInfo.offset2);
+        } else {
+            //Setting offset1 to be large than 0 is invalid while offset2 is 0. So we must set offset2 firstly
+            txtPeriodToOffset.setValue(_periodInfo.offset2);
+            txtPeriodFromOffset.setValue(_periodInfo.offset1);
+        }
         txtPeriodOffset.setValue(_periodInfo.offset3);
 
         this._resetPeriodFromTo(_periodInfo, _data);

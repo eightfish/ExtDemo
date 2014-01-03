@@ -4,6 +4,8 @@
         'EvolveQueryEditor.view.EditorControl'
     ],
     
+    id: 'qnaDialogQueryEditor',
+
     editorControl: undefined,
 
     getContent: function () {

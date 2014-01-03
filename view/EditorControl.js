@@ -50,7 +50,8 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         'EvolveQueryEditor.view.TableTreeLookupWindow',
         'EvolveQueryEditor.view.EvolveProgressDialog',
         "EvolveQueryEditor.view.ExtractionTypeWindow",
-		'EvolveQueryEditor.view.SortingWindow'
+		'EvolveQueryEditor.view.SortingWindow',
+		'EvolveQueryEditor.view.FilterOptionsWindow'
     ],
 
     title: 'Q&A Query Editor',
@@ -178,9 +179,14 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                             region: 'center',
                             itemId: 'gridFilters',
                             id: 'qnaGridFilters',
-                            header: false,
-                            title: 'My Grid Panel',
                             store: EvolveQueryEditor.model.Query.getFilterStore(),
+							tools: [{
+								type: 'gear',
+								tooltip: 'Options',
+								handler : function(event, toolEl, panel) {
+									me.onPopupFilterOptionsWindowClick();
+								}
+							}],
                             columns: [
                                 {
                                     xtype: 'gridcolumn',
@@ -518,7 +524,6 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
     },
 
     onPopupSortingWindowClick: function () {
-
         var store = EvolveQueryEditor.model.Query.getOutputFieldsStore();
 		if (store.getCount() == 0) {
 			//TODO: popup a dialog or even disable the sorting button when there' no output field added yet
@@ -548,6 +553,25 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         sortingWindow.show();
     },
 
+	onFilterOptionsComplete : function (filterModelWithOptions, scope) {
+		
+		
+		
+	},
+
+	onPopupFilterOptionsWindowClick : function () {
+		var filterGrid = this.down('#gridFilters');
+		var selectedFilter = null;
+		
+		var filterOptionsWindow = Ext.create('EvolveQueryEditor.view.FilterOptionsWindow', {
+			filterModel: selectedFilter,
+			onLookupComplete: this.onFilterOptionsComplete,
+			scope: this
+		});
+
+        filterOptionsWindow.show();
+	},
+	
     onOutputRowDblClick: function (dataview, record, item, index, e, eOpts) {
         var extractTypeWindow = Ext.create("EvolveQueryEditor.view.ExtractionTypeWindow",
             {
