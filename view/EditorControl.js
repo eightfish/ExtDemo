@@ -217,6 +217,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                                     } else {
                                                         lookupWindow = EvolveQueryEditor.view.BasicLookupWindow.Instance;
                                                     }
+                                                    lookupWindow.single = false;//TODO: single should be caculated accodring by report type and filter himself
                                                     lookupWindow.viewFilters = me.down('#gridFilters');
 
                                                     // It would appear that the record passed in is a clone from the store ...

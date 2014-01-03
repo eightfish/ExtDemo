@@ -64,6 +64,7 @@ Ext.define('EvolveQueryEditor.view.BasicLookupWindow', {
             flex: 6,
             region: 'center',
             itemId: 'gridResults',
+            id: 'qnaGridLookup',
             frameHeader: false,
             header: false,
             title: 'My Grid Panel',      
