@@ -2,7 +2,8 @@ Ext.define('EvolveQueryEditor.model.OutputFieldModel', {
     extend: 'Ext.data.Model',
 
     requires: [
-      'Ext.data.Field'
+      'Ext.data.Field',
+	  'EvolveQueryEditor.model.SortingTypeModel'
     ],
     
     fields: [

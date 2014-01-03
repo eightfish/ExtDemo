@@ -4,8 +4,8 @@ Ext.define('EvolveQueryEditor.view.FilterOptionsWindow', {
     layout: 'fit',
     autoshow: true,
     modal: true,
-    minHeight: 600,
-    Height: 600,
+    minHeight: 500,
+    Height: 500,
     minWidth: 500,
     width: 500,
     id: 'qnaWindowFilterOptions',
@@ -40,27 +40,43 @@ Ext.define('EvolveQueryEditor.view.FilterOptionsWindow', {
                         layout: 'column',
                         items:[
                             {
-                                //From and To panel    
                                 xtype: 'panel',
                                 layout: 'form',
                                 border: false,
                                 items: [{
-                                    xtype: 'label',
-                                    id: 'qnaLabelFilterFrom',
-									labelWidth: 50,
+                                    fieldLabel: 'Filter From',
+									xtype: 'textfield',
+                                    id: 'qnaFilterFrom',
                                 	labelAlign: 'right',
-                                    text: 'Filter From'    
+									anchor: '80%'
                                 },{
-                                    xtype: 'textfield',
-                                    id: 'qnaTextFieldFilterFrom',
-                                    width: '180'    
+                                    fieldLabel: 'Filter To',
+									xtype: 'textfield',
+                                    id: 'qnaFilterTo',
+                                	labelAlign: 'right',
+									anchor: '80%'
                                 }]
-                            }
-//                             ,{
-                                
-//                                 //panel comparison operator    
-//                             }
-                        ],
+                            },{   
+								xtype: 'fieldset',
+								id: 'qnaFieldsetComparisonOperator',
+								title: 'Comparison Operator',
+								autoHeight: true,
+								bodyPadding: 5,
+								defaultType: 'radio',
+								layout: 'vbox',
+								items:[
+									{ boxLabel: 'None', name: 'qnaRadioButtonComparisonOperator', inputValue: '1', checked: true},
+									{ boxLabel: 'Display all values', name: 'qnaRadioButtonComparisonOperator', inputValue: '2' },
+									{ boxLabel: 'Is greater than', name: 'qnaRadioButtonComparisonOperator', inputValue: '3' },
+									{ boxLabel: 'Is greater than or equal to', name: 'qnaRadioButtonComparisonOperator', inputValue: '4' },
+									{ boxLabel: 'Is less than', name: 'qnaRadioButtonComparisonOperator', inputValue: '5' },
+									{ boxLabel: 'Is less than or equal to', name: 'qnaRadioButtonComparisonOperator', inputValue: '6' },
+									{ boxLabel: 'Is not equal to', name: 'qnaRadioButtonComparisonOperator', inputValue: '7' },
+									{ boxLabel: 'Is null', name: 'qnaRadioButtonComparisonOperator', inputValue: '8' },
+									{ boxLabel: 'Not null', name: 'qnaRadioButtonComparisonOperator', inputValue: '9' }
+								]
+							}]
+                            }],
                     }],
                     buttonAlign: 'center',
 				    buttons: [
@@ -81,9 +97,7 @@ Ext.define('EvolveQueryEditor.view.FilterOptionsWindow', {
 						    scope: me,
 						    handler: me.close
 						}
-				    ]}
-             ]
-         });
+				    ]});
          
         me.callParent(arguments);
     }
