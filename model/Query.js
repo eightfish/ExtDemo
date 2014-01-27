@@ -36,23 +36,12 @@ Ext.define('EvolveQueryEditor.model.Query', {
 
     getFilters: function () {
         var filtersRet = [];
-        if (EvolveQueryEditor.model.Query.filtersStore != undefined) {
-            for (var i = 0; i < EvolveQueryEditor.model.Query.filtersStore.count() ; i++) {
-                var filter = EvolveQueryEditor.model.Query.filtersStore.getAt(i);
-                if (filter.get('codePath') != "TABLE") {
-                    if ((filter.get('from') != undefined) && (filter.get('superFieldFilter') == true)) {
-                        filtersRet.push({
-                            codePath: filter.get('codePath'),
-                            valueFrom: filter.get('from'),
-                            valueTo: filter.get('to'),
-                            operator: filter.get('operator'),
-                            mode: filter.get('mode'),
-                            caseSens: filter.get('caseSens'),
-                            segment: filter.get('segment'),
-                            segmentOffset: filter.get('segmentOffset'),
-                            segmentLength: filter.get('segmentLength')
-                        });
-                    }
+		var filterStore =  EvolveQueryEditor.model.Query.filtersStore;
+        if (filterStore !== undefined) {
+            for (var i = 0; i <filterStore.count() ; i++) {
+                var filter = filterStore.getAt(i);
+                if (!filter.isTable() && filter.isSuperFieldFilter() && !Ext.isEmpty(filter.get('from')) ) {
+					filtersRet.push(filter.toJsonWithOptions());
                 }
             }
         }
@@ -64,7 +53,7 @@ Ext.define('EvolveQueryEditor.model.Query', {
         if (EvolveQueryEditor.model.Query.filtersStore != undefined) {
             for (var i = 0; i < EvolveQueryEditor.model.Query.filtersStore.count() ; i++) {
                 var filter = EvolveQueryEditor.model.Query.filtersStore.getAt(i);
-                if (filter.get('superFieldFilter') === true && filter.get('from') === undefined) {
+                if (filter.isSuperFieldFilter() === true && filter.get('from') === undefined) {
                     return false;
                 }
             }
@@ -99,23 +88,29 @@ Ext.define('EvolveQueryEditor.model.Query', {
         return this.reportType === undefined ? undefined : this.reportType.data.Type;// this.reportType.get("Type");
     },
 
+    clearTable:function(){
+        this.tableCode = '';
+        this.tableName = '';
+        this.tableNamePlusCode = '';
+    },
+
     setTable: function (code, value, tableNamePlusCode) {
         for (var i = 0; i < EvolveQueryEditor.model.Query.filtersStore.count() ; i++) {
             var filter = EvolveQueryEditor.model.Query.filtersStore.getAt(i);
-            if (filter.get('codePath') === "TABLE") {
-                var model = EvolveQueryEditor.model.Query;
+            var model = EvolveQueryEditor.model.Query;
+            if (filter.isTable()) {
                 // Create a model to hold the selection ...
                 var modelSelection = Ext.create('EvolveQueryEditor.model.FilterValueModel', {
-                    codePath: code,
-                    valueFrom: code,
-                    valueTo: code
+                    codePath: "TABLE",
+                    valueFrom: value,
+                    valueTo: value
                 });
 
                 filter.beginEdit();
                 filter.setValue(modelSelection);
                 filter.set('hasValue', true);
-                filter.set('from', value);
-                filter.set('to', value);
+                filter.set('from', code);
+                filter.set('to', code);
                 filter.endEdit();
 
                 model.tableCode = code;
@@ -168,22 +163,55 @@ Ext.define('EvolveQueryEditor.model.Query', {
 
     queryToFormula: function () {
         var query = this;
-        var ret = Ext.String.format("{0},{1},{2},{3},", "1", "2", query.getProductCode(), query.tableCode);
+		
+		var ret = { success: true,
+					error: '',
+					formula: '' };
+		
+		var productCode = query.getProductCode();
+		if(Ext.isEmpty(productCode)) {
+			ret.success = false;
+			ret.error = 'productCode';
+			return ret;
+		}
+		
+		var tableCode = query.tableCode;
+		if(Ext.isEmpty(tableCode)) {
+			ret.success = false;
+			ret.error = 'tableCode';
+			return ret;
+		}
+		
+        var formula = Ext.String.format("{0},{1},{2},{3},", "1", "2", productCode, tableCode);
 
         var filtersStore = query.filtersStore;
+		if(filtersStore.count() === 0) {
+			ret.success = false;
+			ret.error = 'filtersStore';
+			return ret;
+		}
+		
         for (var i = 0; i < filtersStore.count() ; i++) {
             var filter = filtersStore.getAt(i);
-            if (filter.get('codePath') != "TABLE") {
-                ret += Ext.String.format("{0},", this.filterToFormula(filter));
+            if (!filter.isTable()) {
+                formula += Ext.String.format("{0},", this.filterToFormula(filter));
             }
         }
+		
         var outputFieldsStore = query.getOutputFieldsStore();
+		if(outputFieldsStore.count() === 0) {
+			ret.success = false;
+			ret.error = 'outputFieldsStore';
+			return ret;
+		}
+		
         for (var i = 0; i < outputFieldsStore.count() ; i++) {
             var outputField = outputFieldsStore.getAt(i);
-            ret += Ext.String.format("{0},", this.outputFieldToFormula(outputField));
+            formula += Ext.String.format("{0},", this.outputFieldToFormula(outputField));
         }
-
-        return Ext.String.format("={0}(\"{1}{2}\",{3})", this.reportType.toFormula(), ret, "RT=-4154,RF=111111011,AF=1,TP=,", "");
+		
+		ret.formula = Ext.String.format("={0}(\"{1}{2}\",{3})", this.reportType.toFormula(), formula, "RT=-4154,RF=111111011,AF=1,TP=,", "");
+        return ret;
     },
 
     removeQuoteIfPossible: function(value){
@@ -221,26 +249,35 @@ Ext.define('EvolveQueryEditor.model.Query', {
             filtersStore.add(modelTable);
             this.setTable(tableInMatch, tableInMatch, tableInMatch);
 
-			var regExpForFilter = /(F=[^,]+,(?:T=[^,]+,)?K=[^,]+)/;
+			var regExpForFilter = /(F=([^,]+),(?:T=([^,]+),)?K=([^,]+))/;
             var matches2 = reportContentInMatch.match(new RegExp(regExpForFilter.source, "g"));
             var filterMap = new Ext.util.HashMap();
             for(var i=0; i<matches2.length; i++){
                 var matches3 = matches2[i].match(regExpForFilter);
-                filterMap.add(matches3[3], { from: me.removeQuoteIfPossible(matches3[1]), to: me.removeQuoteIfPossible(matches3[2]) })
+                var filterValues = [];
+                if (filterMap.containsKey(matches3[4])) {
+                    filterValues = filterMap.get(matches3[4]);
+                } 
+                filterValues.push({ from: me.removeQuoteIfPossible(matches3[2]), to: me.removeQuoteIfPossible(matches3[3]) });
+                filterMap.add(matches3[4], filterValues);
             }
 
             //Add super filters
             this.getSuperFiltersStore(function (records) {
                 for (var rowIndex = 0; rowIndex < records.length; rowIndex++) {
-                    if (records[rowIndex].get('from') == '') {
-                        records[rowIndex].set('from', undefined);  // No default - so make it really no value
+					var superFilterModel = records[rowIndex];
+                    if (superFilterModel.get('from') == '') {
+                        superFilterModel.set('from', undefined);  // No default - so make it really no value
                     }
-                    if(filterMap.get(records[rowIndex].get('codePath')) !== undefined){
-                        records[rowIndex].set('from', filterMap.get(records[rowIndex].get('codePath')).from);
-                        records[rowIndex].set('to', filterMap.get(records[rowIndex].get('codePath')).to);
+                    var existedValue = filterMap.get(superFilterModel.get('codePath'));
+                    if (existedValue !== undefined && existedValue.length > 0) {
+                        superFilterModel.set('from', existedValue[0].from);
+                        superFilterModel.set('to', existedValue[0].to);
+						//todo: set more properties from existedValue[0]
+                        filterMap.remove(existedValue);
                     }
                     records[rowIndex].set('superFieldFilter', true);
-                    filtersStore.insert(rowIndex, records[rowIndex]);
+                    filtersStore.insert(rowIndex, superFilterModel);
                 }
 
  
@@ -250,12 +287,79 @@ Ext.define('EvolveQueryEditor.model.Query', {
                         if (rs[row].get('from') == '') {
                             rs[row].set('from', undefined);  // No default - so make it really no value
                         }
-                        if (filterMap.get(rs[row].get('codePath')) !== undefined) {
-                            rs[row].set('from', filterMap.get(rs[row].get('codePath')).from);
-                            rs[row].set('to', filterMap.get(rs[row].get('codePath')).to);
+                        var existedValue = filterMap.get(rs[row].get('codePath'))
+                        if (existedValue !== undefined && existedValue.length > 0) {
+                            rs[row].set('from', existedValue[0].from);
+                            rs[row].set('to', existedValue[0].to);
+							//todo: set more properties from existedValue[0]
                         }
                         filtersStore.add(rs[row]);
+                        //Add same code path optional filters
+                        if (existedValue.length > 1) {
+                            Ext.each(existedValue, function (filterValue, index) {
+                                if (index > 0) {
+                                    var newFilter = {
+                                        name: rs[row].get('name'),
+                                        from: filterValue.from,
+                                        to: filterValue.to,
+                                        codePath: rs[row].get('codePath'),
+                                        single: rs[row].get('single'),
+                                        dataType: rs[row].get('dataType'),
+                                        allowSegments: rs[row].get('allowSegments'),
+                                        lookupCategory: rs[row].get('lookupCategory'),
+                                        allowMultipleFilters: rs[row].get('allowMultipleFilters'),
+                                        isOptionalFilter: true
+                                    }
+                                    filtersStore.add(newFilter);
+                                }
+                            });
+                        }
+                        filterMap.remove(existedValue);
+
                     }
+
+                    //Add all left optional filters
+                    filterMap.each(function (codePath, filterValues) {
+                        Ext.Ajax.request({
+                            url: EvolveQueryEditor.model.Query.serverUrlBase + '&method=BringOutFieldDetails',
+                            jsonData: {
+                                clientToken: EvolveQueryEditor.model.Query.clientToken,
+                                codePath: codePath,
+                                async: false,
+                                query: {
+                                    productCode: EvolveQueryEditor.model.Query.getProductCode(),
+                                    tableCode: EvolveQueryEditor.model.Query.tableCode,
+                                    mode: EvolveQueryEditor.model.Query.getQueryType(),
+                                    filters: EvolveQueryEditor.model.Query.getFilters()
+                                }
+                            },
+                            success: function (response) {
+                                var filterData = Ext.decode(response.responseText);
+                                Ext.each(filterValues, function (filterValue, index) {
+                                    newFilter = {
+                                        name: filterData.name,
+                                        from: filterValue.from,
+                                        to: filterValue.to,
+                                        codePath: filterData.codePath,
+                                        //valueFrom: filterData.from,
+                                        //valueTo: filterData.to,
+                                        single: filterData.single,
+                                        dataType: filterData.dataType,
+                                        allowSegments: filterData.allowSegments,
+                                        lookupCategory: filterData.lookupCategory,
+                                        allowMultipleFilters: filterData.allowMultipleFilters,
+                                        isOptionalFilter: true
+                                    }
+                                    filtersStore.add(newFilter);
+
+                                });
+                            },
+                            failure: function (response, options) {
+                                alert(response.statusText);
+                            }
+                        });
+
+                    });
 
 					//add outputfields
 					var outputFieldStore = me.getOutputFieldsStore();

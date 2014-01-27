@@ -19,31 +19,56 @@ Ext.define('EvolveQueryEditor.view.BasicLookupWindow', {
     requires: [
         'EvolveQueryEditor.model.Query',
         'EvolveQueryEditor.model.FilterModel',
-        'EvolveQueryEditor.model.FilterValueModel'
+        'EvolveQueryEditor.model.FilterValueModel',
+		'EvolveQueryEditor.util.QAAMsg'
     ],
 
     height: 322,
     itemId: 'BasicLookupWindow',
     id: 'qnaWindowBasicLookup',
-    width: 400,
+    width: 450,
     layout: {
         type: 'border'
     },
     title: 'Lookup',
     modal: true,
-
+    closeAction:'hide',
+	
     initComponent: function() {
         var me = this;
 
         Ext.applyIf(me, {
             items: [
                 {
-                    xtype: 'container',
-                    flex: 1,
+                    xtype: 'label',
                     region: 'south',
-                    height: 150
+                    height: 20,
+                    text: '',
+                    itemId: "qnaLabelSelectedValue",
+                    id:"qnaLabelSelectedValue"
                 }
             ],
+            buttonAlign: 'center',
+            buttons: [
+						{
+						    text: 'OK',
+						    scope: me,
+						    id: 'qnaButtonBasicLookupOK',
+							itemId: 'qnaButtonOK',
+                            listeners : {
+                                click : { fn: me.onOkButtonClicked, scope:me } 
+                            }						    
+						},
+						{
+						    text: 'Cancel',
+							id: 'qnaButtonBasicLookupCancel',
+							itemId: 'qnaButtonCancel',
+						    scope: me,
+ 						    handler: function(){
+                                this.hide();
+                                }
+						}
+				    ],
             listeners: {
                 show: {
                     fn: me.onWindowShow,
@@ -59,21 +84,27 @@ Ext.define('EvolveQueryEditor.view.BasicLookupWindow', {
         me.callParent(arguments);
     },
 
-    createGrid: function(parent, store, columnData) {
-        grid = Ext.create('Ext.grid.Panel', {
-            flex: 6,
+    createGrid: function(parent, store, columnData,multiSelect) {
+      var selMode = multiSelect?'MULTI':'SINGLE';
+      grid = Ext.create('Ext.grid.Panel', {
             region: 'center',
             itemId: 'gridResults',
             id: 'qnaGridLookup',
             frameHeader: false,
             header: false,
-            title: 'My Grid Panel',      
+            title: 'My Grid Panel',
+			forceFit: true,
             store: store,
+			sortableColumns: false,
+			enableColumnHide: false,
             columns: columnData,
             stripeRows: true,
+            selModel:{mode:selMode},
             listeners: {
-                itemdblclick: { fn: parent.rowSelect, scope: parent }
+                itemdblclick: { fn: parent.rowSelect, scope: parent },
+                selectionchange:{fn:parent.selectionchanged,scope:parent}
             }
+			
             //renderTo: 'BasicLookupWindow'
         });
         return grid;
@@ -82,11 +113,15 @@ Ext.define('EvolveQueryEditor.view.BasicLookupWindow', {
     createStore: function(fieldData, values) {
         return Ext.create('Ext.data.ArrayStore', {
             fields: fieldData,
-            data: values});
+            data: values
+        });
     },
 
     onWindowShow: function (component, eOpts) {
         var parent = this;
+
+        Ext.getCmp('qnaButtonBasicLookupOK').setDisabled(true);
+        Ext.getCmp('qnaLabelSelectedValue').setText('');
 
         var storeModel = parent.viewFilters.store.getAt(parent.filterModelIndex);
 
@@ -108,29 +143,34 @@ Ext.define('EvolveQueryEditor.view.BasicLookupWindow', {
                     parent.loadMask.hide();
 
                     var data = Ext.decode(response.responseText);
+                    Ext.Array.forEach(data.columns, function (column, index, array) {
+                        column.renderer = Ext.util.Format.htmlEncode;//Support to display html cahr directlry, for example, <, >
+                    });
                     storeModel.lookupStore = parent.createStore(data.fields, data.data);
                     storeModel.dataColumns = data.columns;
 
                     if (parent.grid !== undefined) {
-                        parent.grid.reconfigure(storeModel.lookupStore, storeModel.dataColumns);
-                    } else {
-                        parent.grid = parent.createGrid(parent, storeModel.lookupStore, storeModel.dataColumns);
-                        parent.add(parent.grid);
+                        parent.remove(parent.grid,true);
                     }
+                    parent.grid = parent.createGrid(parent, storeModel.lookupStore, storeModel.dataColumns,!parent.single);
+                    parent.add(parent.grid);
+                    
                 },
                 failure: function (response, options) {
                     parent.loadMask.hide();
-                    alert(response.statusText);
+                    EvolveQueryEditor.util.QAAMsg.showErrorDialog(response.statusText);
                     parent.loadMask.hide();
                 }
             });
         } else {
             if (parent.grid !== undefined) {
-                parent.grid.reconfigure(storeModel.lookupStore, storeModel.dataColumns);
-            } else {
-                parent.grid = parent.createGrid(parent, storeModel.lookupStore, storeModel.dataColumns);
-                parent.add(parent.grid);
+                parent.remove(parent.grid,true);
+
             }
+            
+           parent.grid = parent.createGrid(parent, storeModel.lookupStore, storeModel.dataColumns,!parent.single);
+           parent.add(parent.grid);
+            
         }
     },
 
@@ -139,16 +179,88 @@ Ext.define('EvolveQueryEditor.view.BasicLookupWindow', {
 
     },
     
-    rowSelect: function(grid, record, item, index, e, eOpts) {
+    selectionchanged:function(selectionModel, newSelectedValues, eOpts){
+      
+      if(Ext.isEmpty(this.single)) {
+          return;
+      }
+      
+      var COMMON_SEPERATOR = "-";
+      var DISCRETE_SEPERATOR = ",";
+      var MULTIPLE_SELECT_SEPERATOR = "+";
+      var COMBINATION = "<<";
+      
+      var FilterIsRangeType = !this.single;
+      var from, to , value;      
+	  var firstColumn = "col1";
+      
+	  Ext.getCmp('qnaButtonBasicLookupOK').setDisabled(newSelectedValues.length === 0);
+	  if (newSelectedValues.length === 0) {
+          from = "";
+          to = "";
+          value = "";
+      } else if( newSelectedValues.length === 1 ){
+          from = newSelectedValues[0].get(firstColumn);
+          to = from;
+          value = FilterIsRangeType ? from + COMMON_SEPERATOR + to : from;
+      } else {
+          var seperator = FilterIsRangeType ? DISCRETE_SEPERATOR : MULTIPLE_SELECT_SEPERATOR;
+          var minIndex = -1, maxIndex = -1;
+          var sb ="";
+          Ext.each(newSelectedValues,function(selectItem){
+              var index = selectItem.index;
+              if(maxIndex === -1){
+                  minIndex = maxIndex = index;
+                  sb = sb + newSelectedValues[0].get(firstColumn);
+              } else {
+                  if( index < minIndex ){
+                      minIndex = index;
+                  }else if( index > maxIndex ){
+                      maxIndex = index;
+                  }
+                  sb = sb + seperator +  selectItem.get(firstColumn);
+              }
+          }); 
+          
+          if( FilterIsRangeType ){
+              if( maxIndex - minIndex === newSelectedValues.length - 1){
+                  //continuous selection
+                  from = newSelectedValues[0].get(firstColumn);
+                  to = newSelectedValues[newSelectedValues.length - 1].get(firstColumn);
+                   value = from + COMMON_SEPERATOR + to;
+              } else {
+                  value = sb;
+                  from = COMBINATION + sb;
+                  to = "";
+              }
+          } else {
+              value = sb;
+              from = sb;
+              to = "";
+          }
+      }
+      
+      this.from = from;
+      this.to = to;
+            
+      var selectedLabel = this.down("#qnaLabelSelectedValue");
+      selectedLabel.setText(value);      
+    },
+    
+    selectionComplete: function(from, to){
         this.hide();
 
         var storeModel = this.viewFilters.store.getAt(this.filterModelIndex);
-        var model = EvolveQueryEditor.model.Query;
+
+        if(storeModel.get('from') === from && storeModel.get('to') === to){
+            //Nothing changed.
+            return;
+        }
         // Create a model to hold the selection ...
         var modelSelection = Ext.create('EvolveQueryEditor.model.FilterValueModel', {
             codePath: storeModel.get('codePath'),
-            valueFrom: record.get('col1'),
-            valueTo: record.get('col1')
+            valueFrom: from,
+            valueTo: to
         });
 
         storeModel.beginEdit();
@@ -161,6 +273,14 @@ Ext.define('EvolveQueryEditor.view.BasicLookupWindow', {
         if (this.onLookupComplete !== undefined) {
             this.onLookupComplete(this.scope);
         }
+    },
+    
+    onOkButtonClicked : function(){
+        this.selectionComplete(this.from, this.to);
+    },
+    
+    rowSelect: function(grid, record, item, index, e, eOpts) {
+        this.selectionComplete( record.get('col1'),record.get('col1'));      
     }
 }, function (Cls) {
     Cls.Instance = EvolveQueryEditor.view.BasicLookupWindow.create();

@@ -17,7 +17,8 @@ Ext.define('EvolveQueryEditor.store.MandatoryFieldsStore', {
     extend: 'Ext.data.Store',
 
     requires: [
-        'EvolveQueryEditor.model.FilterModel'
+        'EvolveQueryEditor.model.FilterModel',
+        'EvolveQueryEditor.store.JsonPostingProxy'
     ],
 
     constructor: function(cfg) {

@@ -1,4 +1,4 @@
-﻿/******************************************************
+/******************************************************
 *                      NOTICE
 * 
 * THIS SOFTWARE IS THE PROPERTY OF AND CONTAINS
@@ -65,7 +65,7 @@ Ext.define("EvolveQueryEditor.util.PeriodUtils", {
                     return null;
                 }
                 if (parts[7]) {
-                    if (isSpecifyPeriod(parts[7], allPeriods)) {
+                    if (EvolveQueryEditor.util.PeriodUtils.isSpecifyPeriod(parts[7], allPeriods)) {
                         periodInfo.currentPeriod = parts[7];
                         periodInfo.overrided = true;
                     } else {
@@ -176,7 +176,7 @@ Ext.define("EvolveQueryEditor.util.PeriodUtils", {
                 } else if (periodType === "QE") {
                     calculatedValues = EvolveQueryEditor.util.PeriodUtils.getQuarter(parseInt(currentPeriodValue.slice(0, 4), 10) - 1, EvolveQueryEditor.util.PeriodUtils.getQuarterNumber(currentPeriodValue), data);
                 } else if (periodType === "QH") {
-                    var year = EvolveQueryEditor.util.PeriodUtils.parseInt(currentPeriodValue.slice(0, 4), 10);
+                    var year = parseInt(currentPeriodValue.slice(0, 4), 10);
                     var quarter = EvolveQueryEditor.util.PeriodUtils.getQuarterNumber(currentPeriodValue);
                     if (quarter === 1) {
                         calculatedValues = EvolveQueryEditor.util.PeriodUtils.getQuarter(year - 1, 4, data);

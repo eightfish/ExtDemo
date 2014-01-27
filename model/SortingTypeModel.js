@@ -39,10 +39,13 @@ Ext.define("EvolveQueryEditor.model.SortingTypeModel", {
     }
 
 }, function (Cls) {
+    var allSortingTypes = new Ext.util.HashMap();
+    
     Cls.None = Ext.create('EvolveQueryEditor.model.SortingTypeModel', {
         sortingType: 'None',
         sortingTypeId: 0
     });
+    allSortingTypes.add(Cls.None.get('sortingTypeId'), Cls.None);
    
     Cls.Ascending = Ext.create('EvolveQueryEditor.model.SortingTypeModel', {
         sortingType: 'Ascending',
@@ -55,6 +58,7 @@ Ext.define("EvolveQueryEditor.model.SortingTypeModel", {
             return Ext.String.format("S={0}", sortIndex);
         }
     });    
+    allSortingTypes.add(Cls.Ascending.get('sortingTypeId'), Cls.Ascending);
 
     Cls.Descending = Ext.create('EvolveQueryEditor.model.SortingTypeModel', {
         sortingType: 'Descending',
@@ -67,6 +71,19 @@ Ext.define("EvolveQueryEditor.model.SortingTypeModel", {
             return Ext.String.format("S=({0})", sortIndex);
         }
     });
+    allSortingTypes.add(Cls.Descending.get('sortingTypeId'), Cls.Descending);
+    
+    Cls.parseFromInt = function(intValue) {
+        if(!Ext.isEmpty(intValue) && Ext.isNumber(intValue)) {
+            var found = allSortingTypes.get(intValue);
+            if(!Ext.isEmpty(found)) {
+                return found;
+            }
+        }
+        
+        return undefined;
+    };
+        
     
     Cls.parseFromString = function(str) {
         var sortingType = EvolveQueryEditor.model.SortingTypeModel.None;

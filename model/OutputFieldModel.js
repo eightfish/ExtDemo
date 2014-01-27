@@ -55,7 +55,13 @@ Ext.define('EvolveQueryEditor.model.OutputFieldModel', {
 		{
             name: 'sortingType',
             type: 'auto',
-			defaultValue: EvolveQueryEditor.model.SortingTypeModel.Ascending
+			defaultValue: 1, //Ascending
+			convert: function (value, record) {
+				if(!Ext.isEmpty(value) && Ext.isNumber(value)) {
+					return EvolveQueryEditor.model.SortingTypeModel.parseFromInt(value);
+				}
+				return value;
+			}
         },
         {
             name: 'sortIndex',

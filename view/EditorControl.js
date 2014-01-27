@@ -27,15 +27,19 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
     extend: 'Ext.panel.Panel',
 
     requires: [
+        'Infor.button.Button',
         'EvolveQueryEditor.model.FieldDataTypeModel',
         'EvolveQueryEditor.model.ExtractionTypeModel',
         'EvolveQueryEditor.model.ScalingFactorModel',
         'EvolveQueryEditor.model.SortingTypeModel',
-        'EvolveQueryEditor.model.FilterModel',
         'EvolveQueryEditor.model.Query',
         'EvolveQueryEditor.model.OutputFieldModel',
 		'EvolveQueryEditor.model.OutputFieldSortingModel',
-        
+        'EvolveQueryEditor.model.ComparisonOperatorModel',
+		'EvolveQueryEditor.model.FilterModeModel',
+		'EvolveQueryEditor.model.FilterOptionsModel',
+        'EvolveQueryEditor.model.FilterModel',
+		
         'EvolveQueryEditor.store.ScalingFactorStore',
         'EvolveQueryEditor.store.ProductStore',
         'EvolveQueryEditor.store.SuperFieldsStore',
@@ -51,14 +55,18 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         'EvolveQueryEditor.view.EvolveProgressDialog',
         "EvolveQueryEditor.view.ExtractionTypeWindow",
 		'EvolveQueryEditor.view.SortingWindow',
-		'EvolveQueryEditor.view.FilterOptionsWindow'
+		'EvolveQueryEditor.view.FilterOptionsWindow',
+		
+		'EvolveQueryEditor.util.QAAMsg',
+		'EvolveQueryEditor.util.HtmlUtils',
+		'EvolveQueryEditor.util.QAAI18N'
     ],
 
     title: 'Q&A Query Editor',
     header: false,
     layout: 'border',
     width: 717,
-    height: 555,
+    height: 455,
     id: 'qnaPanelQueryEditor',
 
     /**
@@ -70,43 +78,21 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         this.dialogContainer.UX.showLoadingMask("Loading...");
         var me = this;
 
-        var proxyUrl = me.dialogContainer.getActionUrl('EvolveProxy', 'Index', { aliasName: me.dialogConfig.aliasName }),
-                    loginUrl = me.dialogContainer.getActionUrl('EvolveProxy', 'Login', { aliasName: me.dialogConfig.aliasName, connectionInfo: me.dialogConfig.connectionInfo });
+        me.setQueryDefinition(EvolveQueryEditor.util.HtmlUtils.convertLTandGT(me.dialogConfig.query));
+		EvolveQueryEditor.util.QAAI18N.init(this.dialogContainer.UX);
 
-        if (EvolveQueryEditor.model.Query.clientToken == undefined) {
-
-            Ext.Ajax.request({
-                url: loginUrl,
-                timeout: 60000,
-                async: false, 
-                success: function (result, options) {
-                    var res = Ext.decode(result.responseText);
-                    var model = EvolveQueryEditor.model.Query;
-                    model.clientToken = res.data.ClientToken;
-                    model.serverUrlBase = proxyUrl;
-
-
-                },
-                failure: function (result, options) {
-                    alert(result.statusText);
-                }
-            });
-
-        }
-
-        me.setQueryDefinition(me.dialogConfig.query);
         Ext.applyIf(me, {
             items: [
                 {
                     xtype: 'panel',
                     region: 'north',
-                    split: true,
-                    height: 250,
+                    split: false,
+                    height: 240,
+                    margin: '0 0 20 0',
                     layout: {
                         type: 'border'
                     },
-                    collapsible: true,
-                    title: 'Filters',
+                    collapsible: false,
                     titleCollapse: true,
                     itemId: 'qnaFiltersPanel',
                     id: 'qnaPanelFilters',
@@ -114,7 +100,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                         {
                             xtype: 'panel',
                             region: 'north',
-                            height: 98,
+                            height: 48,
                             layout: {
                                 type: 'border'
                             },
@@ -124,16 +110,23 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                 {
                                     xtype: 'fieldcontainer',
                                     region: 'west',
-                                    margin: '0 0 0 20',
-                                    width: 358,
+                                    layout: {
+                                        type: 'vbox',
+                                        align: 'left'
+                                    },
                                     items: [
                                         {
+
                                             xtype: 'combobox',
                                             tpl: '<tpl for="."><div class="x-boundlist-item"><span style="display: inline-block; height: 50px;line-height: 50px;vertical-align: middle"><img style="vertical-align: middle" src="{TypeImage}"/>&nbsp;&nbsp;{Caption}</span></div></tpl>',
                                             itemId: 'cbQueryTypes',
+                                            itemId: 'cbQueryTypes',
                                             id: 'qnaComboBoxQueryType',
-                                            width: 301,
-                                            fieldLabel: 'Report Type',
+                                            fieldLabel: EvolveQueryEditor.util.QAAI18N.getLocalized('evolve report type'),
+                                            labelWidth: 80,
+                                            minListWidth: 200,
+                                            listWidth: 200,
+                                            margin: '0 10 0 0',
                                             editable: false,
                                             displayField: 'Caption',
                                             queryMode: 'local',
@@ -146,18 +139,29 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                                     scope: me
                                                 }
                                             }
-                                        },
+                                        }
+                                    ]
+                                },
+                                {
+                                    xtype: 'fieldcontainer',
+                                    region: 'east',
+                                    layout: {
+                                        type: 'vbox',
+                                        align: 'right'
+                                    },
+                                    items: [
                                         {
                                             xtype: 'combobox',
-                                            tpl: '<tpl for="."><div class="x-boundlist-item"><span style="display: inline-block; height: 26px;line-height: 26px;vertical-align: middle"><img style="vertical-align: middle" src="{IconUrl}"/>&nbsp;&nbsp;{Description}</span></div></tpl>',
+                                            tpl: '<tpl for="."><div class="x-boundlist-item"><span style="display: inline-block; height: 26px;line-height: 26px;vertical-align: middle">{Description}</span></div></tpl>',
                                             disabled: EvolveQueryEditor.model.Query.getQueryType() === undefined,
                                             itemId: 'cbProducts',
                                             id: 'qnaComboBoxProduct',
                                             width: 301,
-                                            fieldLabel: 'Product',
+                                            fieldLabel: EvolveQueryEditor.util.QAAI18N.getLocalized('evolve Product'),
+                                            labelWidth: 60,
                                             editable: false,
                                             displayField: 'Description',
-											store: EvolveQueryEditor.model.Query.getProductStore(),
+                                            store: EvolveQueryEditor.model.Query.getProductStore(),
                                             valueField: 'Code',
                                             value: EvolveQueryEditor.model.Query.getProductCode(),
                                             listeners: {
@@ -168,46 +172,139 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                             }
                                         }
                                     ]
+                                },
+                                {
+                                    xtype: 'panel',
+                                    region: 'center',
                                 }
                             ]
                         },
                         {
                             xtype: 'gridpanel',
+                            id: 'filterToolbar',
+                            cls: 'x-toolbar-content-connections',
                             region: 'center',
-                            itemId: 'gridFilters',
+                            itemId: 'qnaGridFilters',
                             id: 'qnaGridFilters',
+                            selModel: {
+                                mode: 'MULTI'
+                            },
+                            viewConfig: {
+                                listeners: {
+                                    itemkeydown: {
+                                        fn: me.onFiltersKeyPress,
+                                        scope: me
+                                    }
+                                },
+                                getRowClass: function (rec, idx, rowPrms, ds) {
+                                    return rec.isOptionalFilter() === false ? 'evolveQueryGridBoldRow' : 'evolveQueryGridRow';
+                                }
+                            },
                             store: EvolveQueryEditor.model.Query.getFilterStore(),
-							tools: [{
-								type: 'gear',
-								tooltip: 'Options',
-								handler : function(event, toolEl, panel) {
-									me.onPopupFilterOptionsWindowClick();
-								}
-							}],
+                            dockedItems: [{
+                                flex: 1,
+                                dock: 'top',
+                                xtype: 'toolbar',
+                                cls: 'x-toolbar-content-connections',
+                                items: [
+								        {
+								            xtype: 'label',
+								            text: 'Filters',
+								            style: 'font-weight: bold'
+								        },
+                                        { xtype: 'tbfill' },
+                                        {
+                                            xtype: 'infor-button',
+                                            ui: 'icon-button',
+                                            action: 'delete',
+                                            tooltip: Infor.Application.getLocalized('Delete'),
+                                            iconCls: 'contentConnectionsListButtonRemove',
+                                            handler: function (event, toolEl, panel) {
+                                                me.onDeleteFiltersClicked();
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                     
                             columns: [
                                 {
                                     xtype: 'gridcolumn',
                                     dataIndex: 'name',
-                                    text: 'Filter Name',
-                                    flex: 15
+                                    text: 'Name',
+                                    flex: 15,
+									sortable: false,								   
+								    menuDisabled: true
                                 },
                                 {
-                                    xtype: 'actioncolumn',
-                                    flex: 2,
+                                    xtype: 'gridcolumn',
+                                    dataIndex: 'from',
+                                    text: 'Value From',
+                                    flex: 25,
+									sortable: false,								   
+								    menuDisabled: true,
+								    getEditor:function(record){
+								        if (record.isTable() || record.isSuperFieldFilter()) {
+								            return null;
+								        } else {
+								            var qnaTextFieldFilterFrom = Ext.getCmp('qnaTextFieldFilterFrom');
+								            if (Ext.isEmpty(qnaTextFieldFilterFrom)) {
+								                qnaTextFieldFilterFrom = Ext.create('Ext.grid.CellEditor', { field: Ext.create('Ext.form.field.Text', { id: 'qnaTextFieldFilterFrom', selectOnFocus: true }) });
+								            }
+								            return qnaTextFieldFilterFrom;
+								        }
+								    },
+								    renderer : Ext.util.Format.htmlEncode //Support to display html cahr directlry, for example, <, >
+
+                                },
+                                {
+                                    xtype: 'gridcolumn',
+                                    dataIndex: 'to',
+                                    text: 'Value To',
+                                    flex: 25,
+									sortable: false,								   
+									menuDisabled: true,
+									getEditor: function (record) {
+									    if (record.isTable() || record.isSuperFieldFilter()) {
+									        return null;
+									    } else {
+									        var qnaTextFieldFilterTo = Ext.getCmp('qnaTextFieldFilterTo');
+									        if (Ext.isEmpty(qnaTextFieldFilterTo)) {
+									            qnaTextFieldFilterTo = Ext.create('Ext.grid.CellEditor', { field: Ext.create('Ext.form.field.Text', { id: 'qnaTextFieldFilterTo', selectOnFocus: true }) });
+									        }
+									        return qnaTextFieldFilterTo;
+									    }
+									},
+									renderer : Ext.util.Format.htmlEncode //Support to display html cahr directlry, for example, <, >
+
+                                },
+                                {
+                                    xtype: 'inforactioncolumn',
+                                    flex: 1,
+                                    sortable: false,
+                                    align: 'center',
+                                    tdCls: 'evolveQueryGridActionColumnVerticalAlign',
+                                    menuDisabled: true,
                                     items: [
-                                        {
+                                            Ext.create('Infor.grid.column.Button', {
+                                                            tooltip: 'Lookup',
+                                            getClass: function (value, meta, record) {
+                                                if (!(record.isTable() || record.get('lookupCategory') === "IS_FIXED_LIST" || record.get('lookupCategory') === "IS_DYNAMIC_LIST" || record.get('lookupCategory') === "IS_PERIOD")) {// || record.get('lookupCategory') === "IS_DATE"  We dont support date lookup currently;
+                                                    return 'x-hide-visibility';
+                                                }
+                                                return 'evolveQueryEditorLookup toolbar';
+                                            },
                                             handler: function (view, rowIndex, colIndex, item, e, record, row) {
-                                                var filterType = record.get('codePath');
-                                                if (filterType == 'TABLE') {
+                                                if (record.isTable()) {
                                                     // Perform a table lookup ...
                                                     var lookupWindow = EvolveQueryEditor.view.TableTreeLookupWindow.Instance;
-                                                    lookupWindow.viewFilters = me.down('#gridFilters');
+                                                    lookupWindow.viewFilters = me.down('#qnaGridFilters');
+													lookupWindow.title = 'Table';
 
                                                     // It would appear that the record passed in is a clone from the store ...
                                                     // ... edit operations need to operate on the one in the store so find it
                                                     // ... and use that instead ...
-                                                    var storeRecordIndex = lookupWindow.viewFilters.store.findExact('codePath', record.get('codePath'));
-                                                    lookupWindow.filterModelIndex = storeRecordIndex;
+                                                    lookupWindow.filterModelIndex = rowIndex;
                                                     lookupWindow.onLookupComplete = me.onTableLookupComplete;
                                                     lookupWindow.scope = me;
                                                     lookupWindow.show();
@@ -220,15 +317,14 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                                     } else {
                                                         lookupWindow = EvolveQueryEditor.view.BasicLookupWindow.Instance;
                                                     }
-                                                    lookupWindow.single = false;//TODO: single should be caculated accodring by report type and filter himself
-                                                    lookupWindow.viewFilters = me.down('#gridFilters');
+                                                    lookupWindow.single = record.get('single');
+                                                    lookupWindow.viewFilters = me.down('#qnaGridFilters');
 
                                                     // It would appear that the record passed in is a clone from the store ...
                                                     // ... edit operations need to operate on the one in the store so find it
                                                     // ... and use that instead ...
-                                                    var storeRecordIndex = lookupWindow.viewFilters.store.findExact('codePath', record.get('codePath'));
-                                                    lookupWindow.filterModelIndex = storeRecordIndex;
-                                                    if (record.get('superFieldFilter') === true) {
+                                                    lookupWindow.filterModelIndex = rowIndex;
+                                                    if (record.isSuperFieldFilter()) {
                                                         lookupWindow.onLookupComplete = me.onSuperfieldLookupComplete;
                                                     } else {
                                                         lookupWindow.onLookupComplete = undefined;
@@ -237,55 +333,26 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                                     lookupWindow.show();
                                                 }
                                             },
-                                            icon: me.dialogContainer.getResourceUrl('Content/ellipsis.png'),
-                                            iconCls: ''
-                                        }
+                                            //icon: me.dialogContainer.getResourceUrl('Content/Lookup.png'),
+                                            //iconCls: ''
+                                        })
                                     ]
                                 },
                                 {
-                                    xtype: 'gridcolumn',
-                                    dataIndex: 'from',
-                                    text: 'Filter Value From',
-                                    flex: 25,
-                                    editor:
-									{
-									    xtype: 'textfield',
-									    id: 'qnaTextFieldFilterFrom',
-									    x: 120,
-									    y: 10,
-									    labelWidth: 50
-									}
-                                },
-                                {
-                                    xtype: 'actioncolumn',
+                                    xtype: 'inforactioncolumn',
+                                    align: 'center',
+                                    tdCls: 'evolveQueryGridActionColumnVerticalAlign',
                                     flex: 1,
+                                    sortable: false,
+                                    menuDisabled: true,
                                     items: [
-                                        {
-
-                                        }
-                                    ]
-                                },
-                                {
-                                    xtype: 'gridcolumn',
-                                    dataIndex: 'to',
-                                    text: 'Filter Value To',
-                                    flex: 25,
-                                    editor:
-									{
-									    xtype: 'textfield',
-									    id: 'qnaTextFieldFilterTo',
-									    x: 120,
-									    y: 10,
-									    labelWidth: 50
-									}
-                                },
-                                {
-                                    xtype: 'actioncolumn',
-                                    flex: 1,
-                                    items: [
-                                        {
-
-                                        }
+                                            Ext.create('Infor.grid.column.Button', {
+                                                tooltip: 'Filter options',
+                                            handler: function (view, rowIndex, colIndex, item, e, record, row) {
+                                                me.onPopupFilterOptionsWindowClick(record);
+                                            },
+                                            iconCls: 'evolveQueryEditorSettings toolbar'
+                                        })
                                     ]
                                 }
                             ],
@@ -294,7 +361,35 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
 
                                 })
                             ]
+                        },
+                        /*
+                        {
+                            xtype: 'panel',
+                            region: 'south',
+                            border: false,
+                            height: 41,
+                            layout: {
+                                type: 'absolute'
+                            },
+                            frameHeader: false,
+                            header: false,
+                            items: [
+                                {
+                                    xtype: 'button',
+                                    id: 'qnaButtonAddFilter',
+                                    x: 20,
+                                    y: 10,
+                                    text: '^',
+                                    listeners: {
+                                        click: {
+                                            fn: me.AddFilter,
+                                            scope: me
+                                        }
+                                    }
+                                }
+                            ]
                         }
+                        */
                     ]
                 },
                 {
@@ -305,7 +400,6 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                         type: 'hbox'
                     },
                     id: 'qnaPanelOutput',
-                    title: 'Output',
                     titleCollapse: true,
                     items: [
                         {
@@ -321,51 +415,60 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                             },
                             frameHeader: false,
                             header: false,
-                            title: 'My Panel',
                             items: [
-                                {
-                                    xtype: 'panel',
-                                    region: 'north',
-                                    border: false,
-                                    height: 41,
-                                    layout: {
-                                        type: 'absolute'
-                                    },
-                                    frameHeader: false,
-                                    header: false,
-                                    title: 'My Panel',
-                                    items: [
-                                        {
-                                            xtype: 'button',
-                                            id: 'qnaButtonAddFilter',
-                                            x: 20,
-                                            y: 10,
-                                            text: 'Add Filter'
-                                        },
-                                        {
-                                            xtype: 'textfield',
-                                            id: 'qnaTextFieldFind',
-                                            x: 120,
-                                            y: 10,
-                                            fieldLabel: 'Find',
-                                            labelWidth: 50
-                                        }
-                                    ]
-                                },
                                 {
                                     xtype: 'treepanel',
                                     flex: 1,
-                                    margins: '0 10 10 10',
                                     region: 'center',
-                                    title: 'Selection List',
                                     lines: true,
                                     useArrows: true,
+                                    dockedItems: [{
+                                        flex: 1,
+                                        dock: 'top',
+                                        xtype: 'toolbar',
+                                        cls: 'x-toolbar-content-connections',
+                                        height: '36',
+                                        items: [
+                                        {
+                                            xtype: 'label',
+                                            text: 'Available columns',
+                                            style: 'font-weight: bold'
+                                        },
+                                                { xtype: 'tbfill' },                                                
+                                        {
+                                            xtype: 'infor-button',
+                                            ui: 'icon-button',
+                                            tooltip: 'Add Filter',
+                                            iconCls: 'contentConnectionsListButtonUp',
+                                            disabled: true,
+                                            id: 'qnaButtonAddFilter',
+                                            listeners: {
+                                                click: {
+                                                    fn: me.AddFilter,
+                                                    scope: me
+                                                }
+                                            }
+                                        },
+                                        {
+                                            xtype: 'infor-button',
+                                            ui: 'icon-button',
+                                            tooltip: 'Add Column',
+                                            id: 'qnaButtonAddColumn',
+                                            disabled: true,
+                                            iconCls: 'evolveQueryEditorAddOutputColumn',
+                                            listeners: {
+                                                click: { fn: me.onAddOutputFieldButtonClicked, scope: me }
+                                            }
+                                        }
+                                        ]
+                                    }],
                                     rootVisible: false,
                                     itemId: 'fieldsTree',
                                     id: 'qnaTreeSelectionList',
                                     listeners: {
                                         beforeitemexpand: { fn: me.expandFieldsCheck, scope: me },
-                                        itemdblclick: { fn: me.dblClickField, scope: me }
+                                        itemdblclick: { fn: me.dblClickField, scope: me },
+                                        selectionchange: { fn: me.fieldSelectionChanged, scope: me }
                                     },
                                     viewConfig: {
 
@@ -379,7 +482,9 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                             minWidth: 36,
                             width: 36,
                             layout: {
-                                type: 'absolute'
+                                type: 'vbox',
+								pack:'center',
+								align:'center'
                             },
                             bodyStyle: {
                                 background: 'transparent'
@@ -388,52 +493,55 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                             header: false,
                             title: 'My Panel',
                             items: [
-                                {
+                                /*{
                                     xtype: 'button',
-                                    x: 0,
-                                    y: 40,
                                     width: 36,
-                                    text: '>'
-                                },
-                                {
-                                    xtype: 'button',
-                                    x: 0,
-                                    y: 70,
-                                    width: 36,
-                                    text: '>>'
-                                },
-                                {
-                                    xtype: 'button',
-                                    x: 0,
-                                    y: 170,
-                                    margin: '0, 50, 0, 0',
-                                    width: 36,
-                                    text: '<'
-                                },
-                                {
-                                    xtype: 'button',
-                                    x: 0,
-                                    y: 200,
-                                    width: 36,
-                                    text: '<<'
-                                }
-                            ]
+                                    text: '>',
+									listeners: {
+										click: {fn: me.onAddOutputFieldButtonClicked,scope: me}		
+                                	}
+                            } */]
                         },
                         {
                             xtype: 'gridpanel',
                             flex: 1,
-                            margin: 10,
-                            title: 'Output Columns',
                             itemId: 'qnaGridFields',
                             id: 'qnaGridFields',
+							forceFit: true,
+							selModel:{mode:'MULTI'},
                             store: EvolveQueryEditor.model.Query.getOutputFieldsStore(),
-							tools: [{
-								type: 'gear',
-								tooltip: 'Sort',
-								handler : function(event, toolEl, panel) {
-									me.onPopupSortingWindowClick();
-								}
-							}],
+                            dockedItems: [{
+                                flex: 1,
+                                dock: 'top',
+                                xtype: 'toolbar',
+                                cls: 'x-toolbar-content-connections',
+                                items: [
+								{
+								    xtype: 'label',
+								    text: 'Output',
+                                    style: 'font-weight: bold'
+								},
+                                        { xtype: 'tbfill' },
+								{
+								    xtype: 'infor-button',
+								    ui: 'icon-button',
+								    tooltip: Infor.Application.getLocalized('Delete'),
+								    iconCls: 'contentConnectionsListButtonRemove',
+								    handler : function(event, toolEl, panel) {										
+								        me.onDeleteOutputfieldsClicked();
+								    }
+								},
+								{
+								    xtype: 'infor-button',
+								    ui: 'icon-button',
+								    tooltip: 'Sort Options',
+								    iconCls: 'evolveQueryEditorSortOptions',
+								    handler : function(event, toolEl, panel) {
+								        me.onPopupSortingWindowClick();
+								    }
+								}							
+                                ]
+                            }],
                             viewConfig: {
                                 listeners: {
                                     itemkeydown: {
@@ -455,19 +563,71 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                 {
                                     xtype: 'gridcolumn',
                                     dataIndex: 'fieldName',
-                                    text: 'Field'
+                                    text: 'Field',
+									sortable: false,								   
+								    menuDisabled: true
                                 },
                                 {
                                     xtype: 'gridcolumn',
                                     dataIndex: 'extractTypeDesc',
-                                    text: 'Extraction Type'
+                                    text: 'Extraction Type',
+									sortable: false,								   
+								    menuDisabled: true
                                 },
                                 {
                                     xtype: 'gridcolumn',
                                     dataIndex: 'sortOptionDescription',
-                                    text: 'Sort Order'
+                                    text: 'Sort Order',
+									sortable: false,								   
+								    menuDisabled: true
+                                },
+                                {
+                                    xtype: 'inforactioncolumn',
+                                    align: 'center',
+                                    tdCls: 'evolveQueryGridActionColumnVerticalAlign',
+                                    flex: 1,
+                                    sortable: false,
+                                    menuDisabled: true,
+                                    items: [
+                                            Ext.create('Infor.grid.column.Button', {
+                                                tooltip: 'Extraction options',
+                                            handler: function (view, rowIndex, colIndex, item, e, record, row) {
+                                                me.onOutputRowDblClick(view, record);
+                                            },
+                                            iconCls: 'evolveQueryEditorSettings toolbar'
+                                        })
+                                    ]
                                 }
-                            ]
+// 								,
+// 								{
+// 									menuDisabled: true,
+// 									sortable: false,
+// 									xtype: 'actioncolumn',
+// 									hideMode: 'visibility',
+// 									hidden: false,
+// 									itemId: 'qaaButtonOutputfieldDelAction',
+// 									items: [
+// 									{
+// 										handler: function (view, rowIndex, colIndex, item, e, record, row) {
+// 											console.log("hello");
+// 										},
+// 										icon: me.dialogContainer.getResourceUrl('Content/ellipsis.png'),
+// 										iconCls: ''
+										
+// 									}]
+//             				}
+							],
+							listeners: {
+// 								itemmouseenter: {
+// 									fn: me.onGridpanelItemMouseEnter,
+// 									scope: me
+// 								},
+// 								itemmouseleave: {
+// 									fn: me.onGridpanelItemMouseLeave,
+// 									scope: me
+// 								}
+							}
+                            
                         }
                     ]
                 }
@@ -483,20 +643,182 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
 
         this.dialogContainer.UX.hideLoadingMask();
     },
+	
+// 	onGridpanelItemMouseEnter: function(dataview, record, item, index, e, eOpts) {
+// // 		var outputfieldActionBtn = this.down('#qaaButtonOutputfieldDelAction');
+// // 		outputfieldActionBtn.show();
+// 		var actionCell = item.cells[3];
+// 		actionCell.hidden  = true;
+//     },
+	
+// 	onGridpanelItemMouseLeave: function(dataview, record, item, index, e, eOpts) {
+// 		var actionCell = item.cells[3];
+// 		actionCell.hidden  = false;
+// // 		var outputfieldActionBtn = this.down('#qaaButtonOutputfieldDelAction');
+// // 		outputfieldActionBtn.hide();
+//     },
 
-    onOutputRowKeyPress: function (view, record, item, index, key) {
-        if (key.getKey() === Ext.EventObject.DELETE) {
-            var store = view.getStore();
-            var sm = view.getSelectionModel();
-            if (sm.hasSelection()) {
-                store.remove(sm.getSelection());
+    fieldSelectionChanged: function (model, record) {
+        var disabled = !(record.length > 0 && record[0].get('leaf'));
+        Ext.getCmp('qnaButtonAddFilter').setDisabled(disabled);
+        Ext.getCmp('qnaButtonAddColumn').setDisabled(disabled);
+    },
+
+    AddFilter: function (button, e, eOpts) {
+        var me = this;
+        var sm = this.down('#fieldsTree').getSelectionModel();
+        if (sm.hasSelection()) {
+            var selectedField = sm.getSelection()[0].raw;
+            if (!selectedField.leaf) {
+                return;
+            }
+            var lastFilterWithSameCodePath;
+            var lastFilterIndex;
+            for (var i = 0; i < EvolveQueryEditor.model.Query.getFilterStore().count() ; i++) {
+                var filter = EvolveQueryEditor.model.Query.getFilterStore().getAt(i);
+                if (filter.get('codePath') === selectedField.codePath) {
+                    lastFilterWithSameCodePath = filter;
+                    lastFilterIndex = i;
+                }
+            };
+            if (lastFilterWithSameCodePath && lastFilterWithSameCodePath.get('allowMultipleFilters') === false) {
+                EvolveQueryEditor.util.QAAMsg.showErrorDialog('This field cannot be added as a filter multiple times.');
+            } else {
+                this.setLoading(true);
+                Ext.Ajax.request({
+                    url: EvolveQueryEditor.model.Query.serverUrlBase + '&method=BringOutFieldDetails',
+                    jsonData: {
+                        clientToken: EvolveQueryEditor.model.Query.clientToken,
+                        codePath: selectedField.codePath,
+                        query: {
+                            productCode: EvolveQueryEditor.model.Query.getProductCode(),
+                            tableCode: EvolveQueryEditor.model.Query.tableCode,
+                            mode: EvolveQueryEditor.model.Query.getQueryType(),
+                            filters: EvolveQueryEditor.model.Query.getFilters()
+                        }
+                    },
+                    success: function (response) {
+                        me.setLoading(false);
+                        var filterData = Ext.decode(response.responseText);
+                        var filter = {
+                            name: filterData.name,
+                            from: filterData.from,
+                            to: filterData.to,
+                            codePath: filterData.codePath,
+                            //valueFrom: filterData.from,
+                            //valueTo: filterData.to,
+                            single: filterData.single,
+                            dataType: filterData.dataType,
+                            operator: EvolveQueryEditor.model.ComparisonOperatorModel.IS_NONE.get('value'),
+                            caseInsensitive: false,
+                            allowSegments: filterData.allowSegments,
+                            segment: false,
+                            segmentOffset: 1,
+                            segmentLength: 5,
+                            lookupCategory: filterData.lookupCategory,
+                            allowMultipleFilters: filterData.allowMultipleFilters,
+                            isOptionalFilter: true
+                        }
+
+                        if (lastFilterWithSameCodePath) {
+                            filter.lookupStore = lastFilterWithSameCodePath.lookupStore;
+                            filter.dataColumns = lastFilterWithSameCodePath.dataColumns;
+                            EvolveQueryEditor.model.Query.getFilterStore().insert(lastFilterIndex + 1, filter);
+                        } else {
+                            EvolveQueryEditor.model.Query.getFilterStore().add(filter);
+                        }
+
+                    },
+                    failure: function (response, options) {
+                        me.setLoading(false);
+                        EvolveQueryEditor.util.QAAMsg.showErrorDialog(response.statusText);
+                    }
+                });
             }
         }
     },
+	
+	removeOutputfileds:function(){
+		var outputFieldGrid = me.down('#qnaGridFields');
+		var sm = outputFieldGrid.getSelectionModel();
+		
+		if( !sm.hasSelection())
+		{
+			return;
+		}
+		
+		var selections = sm.getSelection();
+		var outputFieldStore = outputFieldGrid.store;
+		
+		Ext.each(selections, function(item){
+			outputFieldStore.remove(item);
+		});
+		
+		var outputFieldSortingStore = this._getOutputFieldSortingStore(outputFieldStore);
+		this._setSortingToOutputFieldModel(outputFieldSortingStore);
+	},
+	
+	_getOutputFieldSortingStore : function(outputFieldStore) {
+		if (outputFieldStore.getCount() === 0) {
+			return null;	
+		}
+		
+		var nonSortedFields = outputFieldStore.queryBy(function(m, id) {return m.get('sortIndex') === 0});
+		var sortedFields = outputFieldStore.queryBy(function(m, id) { return m.get('sortIndex') !== 0});
+		sortedFields.sortBy(function(a, b) {return a.get('sortIndex') > b.get('sortIndex')});
+		var allfields = sortedFields.getRange().concat(nonSortedFields.getRange());
+		
+		var outputFieldSortingStore = Ext.create('Ext.data.Store', {
+                model: "EvolveQueryEditor.model.OutputFieldSortingModel",
+		});
+        allfields.forEach(function(model) {
+			var outputFieldSortingModel = EvolveQueryEditor.model.OutputFieldSortingModel.convertFromOuputFieldModel(model);
+			outputFieldSortingStore.add(outputFieldSortingModel);
+		});
+		
+		return outputFieldSortingStore;
+	},
 
-    onSortingComplete: function (sortedStore, scope) {
-        var me = scope;
-        var grid = me.down('#qnaGridFields');
+    onOutputRowKeyPress: function (view, record, item, index, key) {
+        if (key.getKey() === Ext.EventObject.DELETE) {
+            this.removeOutputfileds();
+        }
+    },
+	
+	onDeleteOutputfieldsClicked : function(){
+		this.removeOutputfileds();		
+	},
+
+	removeOptionalFilters: function () {
+	    var filterGrid = me.down('#qnaGridFilters');
+	    var sm = filterGrid.getSelectionModel();
+
+	    if (!sm.hasSelection()) {
+	        return;
+	    }
+
+	    var selections = sm.getSelection();
+	    var filterStore = filterGrid.store;
+
+	    Ext.each(selections, function (item) {
+	        if (item.isOptionalFilter() === true) {
+	            filterStore.remove(item);
+	        }
+	    });
+	},
+
+	onFiltersKeyPress: function (view, record, item, index, key) {
+	    if (key.getKey() === Ext.EventObject.DELETE) {
+	        this.removeOptionalFilters();
+	    }
+	},
+
+	onDeleteFiltersClicked: function () {
+	    this.removeOptionalFilters();
+	},
+	
+	_setSortingToOutputFieldModel : function(sortedStore) {
+        var grid = this.down('#qnaGridFields');
 		var outputFieldsStore = EvolveQueryEditor.model.Query.getOutputFieldsStore();
 		
 		var index = 0;
@@ -507,9 +829,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
 				});	
 				
 			if(match === -1) {
-				var codePath = sortingModel.get('codePath');
-				var extractType = sortingModel.get('extractType').get('description');
-				EvolveQueryEditor.util.QAALogger.error('The outputField [codepath:' + codePath + ', extractionType:' + extractType + '] exists in sorting dialog but doesn\'t exist in report dialog');			
+				//the outputField has been removed
 				return; 
 			}
 			
@@ -524,6 +844,11 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
 				matchedOutputField.setSorting(sortingType, ++index);
 			}
 		});
+	},
+	
+    onSortingComplete: function (sortedStore, scope) {
+		var me = scope;
+		me._setSortingToOutputFieldModel(sortedStore);
     },
 
     onPopupSortingWindowClick: function () {
@@ -533,19 +858,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
 			return;
 		}
 		
-		var nonSortedFields = store.queryBy(function(m, id) {return m.get('sortIndex') === 0});
-		var sortedFields = store.queryBy(function(m, id) { return m.get('sortIndex') !== 0});
-		sortedFields.sortBy(function(a, b) {return a.get('sortIndex') > b.get('sortIndex')});
-		var allfields = sortedFields.getRange().concat(nonSortedFields.getRange());
-		
-		//TODO: this logic maybe move into a customized proxy 
-		var outputFieldSortingStore = Ext.create('Ext.data.Store', {
-                model: "EvolveQueryEditor.model.OutputFieldSortingModel",
-		});
-        allfields.forEach(function(model) {
-			var outputFieldSortingModel = EvolveQueryEditor.model.OutputFieldSortingModel.convertFromOuputFieldModel(model);
-			outputFieldSortingStore.add(outputFieldSortingModel);
-		});
+		var outputFieldSortingStore = this._getOutputFieldSortingStore(store);
 		
         var sortingWindow = Ext.create('EvolveQueryEditor.view.SortingWindow', {
             outputFieldsStore: outputFieldSortingStore,
@@ -556,19 +869,11 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         sortingWindow.show();
     },
 
-	onFilterOptionsComplete : function (filterModelWithOptions, scope) {
-		
-		
-		
-	},
-
-	onPopupFilterOptionsWindowClick : function () {
-		var filterGrid = this.down('#gridFilters');
-		var selectedFilter = null;
+	onPopupFilterOptionsWindowClick : function (selectedFilter) {
+		var filterOptionsModel = EvolveQueryEditor.model.FilterOptionsModel.createFromFilterModel(selectedFilter);
 		
 		var filterOptionsWindow = Ext.create('EvolveQueryEditor.view.FilterOptionsWindow', {
-			filterModel: selectedFilter,
-			onLookupComplete: this.onFilterOptionsComplete,
+			filterOptionsModel: filterOptionsModel,
 			scope: this
 		});
 
@@ -584,7 +889,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
 			
 			
 		extractTypeWindow.onExtractionTypeWindowSetComplete = function(offset,offsetLength,reverseSign,factorValue,newExtractedType){
-            EvolveQueryEditor.util.QAALogger.info("Extration type window closed");			
+            EvolveQueryEditor.util.QAALogger.info("Extraction type window closed");			
 			
         	record.set("segmentOffset", offset);        
         	record.set("segmentLength",offsetLength);        
@@ -601,10 +906,14 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
 
     onSuperfieldLookupComplete: function (scope) {
         var me = scope;
-        me.down('#gridFilters').getView().refresh();
+        me.down('#qnaGridFilters').getView().refresh();
 
-        me.clearExistedFiltersAndFields(function (filter) { return filter.get('superFieldFilter') === false; });
+        me.clearExistedFiltersAndFields(function (filter) { return filter.isSuperFieldFilter() === false; }, true);
 
+        me.addTableFilterIfPossible();
+    },
+
+    addTableFilterIfPossible: function(){
         var allSuperFieldsComplete = EvolveQueryEditor.model.Query.isAllSuperFieldFiltersSet();
 
         if (allSuperFieldsComplete) {
@@ -619,7 +928,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         }
     },
 
-    clearExistedFiltersAndFields: function(condition){
+    clearExistedFiltersAndFields: function(condition, alsoClearTable){
         //Remove all existed filters.
         this.clearFilters(condition);
 
@@ -628,6 +937,10 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
 
         //Clear output fields.
         this.clearOutputFields();
+
+        if (alsoClearTable === true) {
+            EvolveQueryEditor.model.Query.clearTable();
+        }
     },
 
     clearFilters: function(condition){
@@ -650,6 +963,12 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         var treeFields = this.down('#fieldsTree');
         treeFields.setRootNode([]);
     },
+    _getTreeLeafNodeImgCls:function(){
+        return "evolveQueryTreeLeafNodeImg";
+    },
+    _getTreeNonLeafNodeImgCls:function(){
+        return "evolveQueryTreeNonLeafNodeImg";
+    },
 
     loadFieldsTree:function(){
         // Load Fields tree ... 
@@ -671,21 +990,26 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
             success: function (response) {
                 treeFields.setLoading(false);
                 var data = Ext.decode(response.responseText);
+						
+				Ext.each(data.data.children, function(item){
+					item.iconCls = item.leaf?me._getTreeLeafNodeImgCls():me._getTreeNonLeafNodeImgCls();
+				});
+				
                 treeFields.setRootNode(data.data);
             },
             failure: function (response, options) {
                 treeFields.setLoading(false);
-                alert(response.statusText);
+                EvolveQueryEditor.util.QAAMsg.showErrorDialog(response.statusText);
             }
         });
     },
 
     onTableLookupComplete: function (scope) {
         var me = scope;
-        var grid = me.down('#gridFilters');
+        var grid = me.down('#qnaGridFilters');
         grid.getView().refresh();
 
-        me.clearExistedFiltersAndFields(function (filter) { return filter.get('superFieldFilter') === false && filter.get('codePath') !== "TABLE"; });
+        me.clearExistedFiltersAndFields(function (filter) { return filter.isSuperFieldFilter() === false && filter.isTable() === false; });
 
         // Load Mandatory Fields ...
         EvolveQueryEditor.view.EvolveProgressDialog.SetProgressText('Retrieving mandatory fields ...');
@@ -722,10 +1046,10 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         var model = EvolveQueryEditor.model.Query;
         model.product = rt;
 
-        me.clearExistedFiltersAndFields(function (filter) { return true; });
+        me.clearExistedFiltersAndFields(function (filter) { return true; }, true);
 
         // Load super filters ...
-        var grid = this.down('#gridFilters');
+        var grid = this.down('#qnaGridFilters');
         EvolveQueryEditor.view.EvolveProgressDialog.SetProgressText('Retrieving superfields ...');
         EvolveQueryEditor.view.EvolveProgressDialog.show();
 
@@ -739,6 +1063,9 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                 records[rowIndex].set('superFieldFilter', true);
                 grid.store.add(records[rowIndex]);
             }
+
+            me.addTableFilterIfPossible();
+
         });
     },
 
@@ -756,10 +1083,19 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
 
         return usedExtractTypes;
     },
+	
+	addOutputField:function(record){
+		
+		if(Ext.isEmpty(record)) 
+		{
+			EvolveQueryEditor.util.QAALogger.info("You must select an output column first");
+			return;
+		}
 
-    dblClickField: function (view, record, item, index, e, eOpts) {
-
-        var usedExtractTypes = this.getUsedExtractTypes(record.raw.codePath);
+		if (!record.get('leaf')) {
+		    return;
+		}
+		var usedExtractTypes = this.getUsedExtractTypes(record.raw.codePath);
 
         var reportType = EvolveQueryEditor.model.Query.reportType;
         var dataType = EvolveQueryEditor.model.FieldDataTypeModel.find(record.raw.datatype);
@@ -767,7 +1103,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         var allExtrationTypes = EvolveQueryEditor.model.ExtractionTypeModel.getAvaliableExtractTypes(isFixedLookup, dataType, reportType, usedExtractTypes);
         
         if (allExtrationTypes.length === 0) {
-            alert("cant add more outputfield");
+            EvolveQueryEditor.util.QAAMsg.showInfoDialog("This output field cannot be added again as all extraction types for it have already been added.");
             return;
         }
         
@@ -787,9 +1123,24 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
         });
 
         EvolveQueryEditor.model.Query.getOutputFieldsStore().add(newOutputField);
+	},
+	
+	onAddOutputFieldButtonClicked:function(button, e, eOpts){
+		var sm = this.down("#fieldsTree").getSelectionModel();
+		
+		var selections = sm.getSelection();
+		
+		var record = selections[0];
+		this.addOutputField(record);
+	},	
+	
+
+    dblClickField: function (view, record, item, index, e, eOpts) {
+		this.addOutputField(record);        
     },
 
     expandFieldsCheck: function (node, eOpts) {
+		var me = this;
         if ((node.raw.childrenFetched != undefined) && (node.raw.childrenFetched == false)) {
             var treeFields = eOpts.scope.down('#fieldsTree');
             treeFields.setLoading(true, "Loading Fields hierarchy ...");
@@ -836,6 +1187,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                                 expandable: (child.leaf == false),
                                 text: child.text,
                                 icon: child.icon,
+								iconCls:child.leaf?me._getTreeLeafNodeImgCls():me._getTreeNonLeafNodeImgCls(),
                                 childrenFetched: (child.leaf == false) ? child.childrenFetched : true,
                                 datatype: child.datatype,
                                 lookupCategory: child.lookupCategory,
@@ -864,7 +1216,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
                 },
                 failure: function (response, options) {
                     treeFields.setLoading(false);
-                    alert(response.statusText);
+                    EvolveQueryEditor.util.QAAMsg.showErrorDialog(response.statusText);
                 }
             });
 
@@ -877,7 +1229,7 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
             if (queryDefinition !== undefined && queryDefinition.length > 0) {
                 var matches = queryDefinition.match(/<Formula>(.+)<\/Formula>/);
                 if (matches.length === 2) {
-                    return EvolveQueryEditor.model.Query.queryFromFormula(matches[1]);
+                    return EvolveQueryEditor.model.Query.queryFromFormula(EvolveQueryEditor.util.HtmlUtils.convertPlaceHolderToAngleBracket(matches[1]));
                 } else {
                     EvolveQueryEditor.util.QAALogger.error(Ext.String.format("The given query definition is not correct: {0}", queryDefinition));
                     return false;
@@ -890,6 +1242,25 @@ Ext.define('EvolveQueryEditor.view.EditorControl', {
     },
 
     getQueryDefinition: function () {
-        return Ext.String.format("<?xml version=\"1.0\" encoding=\"utf-8\"?><PersistentEvolveQuery xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">  <Bindings />  <Formula>={0}(\"{1}\",)</Formula></PersistentEvolveQuery>", EvolveQueryEditor.model.Query.reportType.toFormula(), EvolveQueryEditor.model.Query.queryToFormula())
+		var reportTypeFormula = EvolveQueryEditor.model.Query.reportType.toFormula();
+		if(Ext.isEmpty(reportTypeFormula)) {
+			//TODO: I18N
+			EvolveQueryEditor.util.QAAMsg.showErrorDialog('reportType is empty!');
+			return undefined;
+		}
+		
+		var queryFormula = EvolveQueryEditor.model.Query.queryToFormula();
+		if(Ext.isEmpty(queryFormula) || Ext.isEmpty(queryFormula.success)) {
+			return undefined;
+		} 
+		
+		if(!queryFormula.success) {
+			//TODO: I18N
+			EvolveQueryEditor.util.QAAMsg.showErrorDialog(queryFormula.error + ' is empty');
+			return undefined;
+		}
+		
+		var formulaTemplate = "<?xml version=\"1.0\"?><PersistentEvolveQuery xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">  <Bindings />  <Formula>={0}(\"{1}\",)</Formula></PersistentEvolveQuery>";
+        return Ext.String.format(formulaTemplate, EvolveQueryEditor.util.HtmlUtils.convertAngleBracketToPlaceHolder(reportTypeFormula), EvolveQueryEditor.util.HtmlUtils.convertAngleBracketToPlaceHolder(queryFormula.formula));
     }
 });

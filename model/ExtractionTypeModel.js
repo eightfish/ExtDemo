@@ -166,13 +166,16 @@ Ext.define("EvolveQueryEditor.model.ExtractionTypeModel", {
                 extractionTypes = [EvolveQueryEditor.model.ExtractionTypeModel.None];
                 
             } else if(reportType === EvolveQueryEditor.model.ReportTypeModel.SummaryReport) {
-                extractionTypes =  [EvolveQueryEditor.model.ExtractionTypeModel.None, EvolveQueryEditor.model.ExtractionTypeModel.Count, 
-                EvolveQueryEditor.model.ExtractionTypeModel.Min, EvolveQueryEditor.model.ExtractionTypeModel.Max, 
-                EvolveQueryEditor.model.ExtractionTypeModel.DistinctCount, EvolveQueryEditor.model.ExtractionTypeModel.Sum,
-                EvolveQueryEditor.model.ExtractionTypeModel.Average,EvolveQueryEditor.model.ExtractionTypeModel.Min,
-                EvolveQueryEditor.model.ExtractionTypeModel.Max,EvolveQueryEditor.model.ExtractionTypeModel.DistinctSum,
-                EvolveQueryEditor.model.ExtractionTypeModel.DistinctCount,EvolveQueryEditor.model.ExtractionTypeModel.DistinctAverage];
-                
+                extractionTypes =  [EvolveQueryEditor.model.ExtractionTypeModel.Sum, 
+				EvolveQueryEditor.model.ExtractionTypeModel.Count, 
+				EvolveQueryEditor.model.ExtractionTypeModel.Average,
+				EvolveQueryEditor.model.ExtractionTypeModel.Min,
+				EvolveQueryEditor.model.ExtractionTypeModel.Max,
+				EvolveQueryEditor.model.ExtractionTypeModel.DistinctSum,
+				EvolveQueryEditor.model.ExtractionTypeModel.DistinctCount,
+				EvolveQueryEditor.model.ExtractionTypeModel.DistinctAverage,
+				EvolveQueryEditor.model.ExtractionTypeModel.None];
+			
             } else {
                 EvolveQueryEditor.util.QAALogger.error("Unknown report type", {dump: reportType});
             }

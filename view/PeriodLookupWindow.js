@@ -12,15 +12,17 @@ Ext.define('EvolveQueryEditor.view.PeriodLookupWindow', {
         'EvolveQueryEditor.model.FilterValueModel',
         'EvolveQueryEditor.model.PeriodTypeModel',
         'EvolveQueryEditor.model.PeriodValueModel',
-        'EvolveQueryEditor.util.PeriodUtils'
+        'EvolveQueryEditor.util.PeriodUtils',
+		'EvolveQueryEditor.util.QAAMsg'
     ],
 
-    height: 250,
+    height: 350,
     itemId: 'qnaWindowPeriodLookup',
     id: 'qnaWindowPeriodLookup',
-    width: 650,
+    width: 450,
     layout: {
-        type: 'border'
+        align: 'stretch',
+        type: 'vbox'
     },
     title: 'Period Lookup',
     modal: true,
@@ -32,15 +34,16 @@ Ext.define('EvolveQueryEditor.view.PeriodLookupWindow', {
             items: [
                 {
                     xtype: 'container',
-                    flex: 1,
-                    region: 'north',
-                    height: 150,
+                    margin:'0 0 10 0',
+                    layout:{
+                        type:'hbox',                        
+                    },
                     items: [
                         {
                             xtype: 'combobox',
                             itemId: 'qnaComboBoxPeriodType',
-                            id: 'qnaComboBoxPeriodType',
-                            width: 550,
+                            id: 'qnaComboBoxPeriodType',                            
+                            width:320,
                             editable: false,
                             displayField: 'Description',
                             valueField: 'Code',
@@ -50,139 +53,167 @@ Ext.define('EvolveQueryEditor.view.PeriodLookupWindow', {
                                     scope: me
                                 }
                             }
-                        },
-                        {
-                            xtype: 'container',
-                            layout: {
-                                align: 'middle',
-                                pack: 'center',
-                                type: 'hbox'
-                            },
-                            items: [
-                                {
-                                    xtype: 'combobox',
-                                    itemId: 'qnaComboBoxPeriodFrom',
-                                    id: 'qnaComboBoxPeriodFrom',
-                                    fieldLabel: 'From',
-                                    labelWidth: 30,
-                                    editable: false,
-                                    displayField: 'DisplayValue',
-                                    valueField: 'Value',
-                                    listeners: {
-                                        select: {
-                                            fn: me.onPeriodFromSelect,
-                                            scope: me
-                                        }
-                                    }
-                                },
-                                {
-                                    xtype: 'textfield',
-                                    width: 25,
-                                    id: 'qnaTextFieldPeriodOffsetFrom',
-                                    itemId: 'qnaTextFieldPeriodOffsetFrom',
-                                    listeners: {
-                                        'change': function () {
-                                            me._onPeriodOffsetFromChange();
-                                        }
-                                    }
-                                },
-                                {
-                                    xtype: 'combobox',
-                                    itemId: 'qnaComboBoxPeriodTo',
-                                    id: 'qnaComboBoxPeriodTo',
-                                    fieldLabel: 'To',
-                                    labelWidth: 30,
-                                    editable: false,
-                                    displayField: 'DisplayValue',
-                                    valueField: 'Value',
-                                    listeners: {
-                                        select: {
-                                            fn: me.onPeriodToSelect,
-                                            scope: me
-                                        }
-                                    }
-                                },
-                                {
-                                    xtype: 'textfield',
-                                    width: 25,
-                                    itemId: 'qnaTextFieldPeriodOffsetTo',
-                                    id: 'qnaTextFieldPeriodOffsetTo',
-                                    listeners: {
-                                        'change': function () {
-                                            me._onPeriodOffsetToChange();
-                                        }
-                                    }
-                                },
-                                {
-                                    xtype: 'textfield',
-                                    itemId: 'qnaTextFieldPeriodOffset',
-                                    id: 'qnaTextFieldPeriodOffset',
-                                    width: 60,
-                                    fieldLabel: 'Period Offset:',
-                                    listeners: {
-                                        'change': function () {
-                                            me._onPeriodOffsetChange();
-                                        }
-                                    }
-                                }
-
-                            ]
-                        },
-                        {
-                            xtype: 'textfield',
-                            itemId: 'qnaTextFieldOverridePeriod',
-                            id: 'qnaTextFieldOverridePeriod',
-                            labelWidth: 150,
-                            fieldLabel: 'Current Period Override:',
-                            listeners: {
-                                'change': function () {
-                                    me._onRealValueChange(false, Ext.getCmp('qnaTextFieldOverridePeriod').getValue(), true, me.filterModel.lookupStore);
-                                }
-                            }
-                        }
-                    ]
+                        }]
                 },
                 {
                     xtype: 'container',
-                    region: 'south',
-                    margin: '40 0 0 0 0',
-                    layout: {
-                        align: 'middle',
-                        pack: 'center',
-                        type: 'hbox'
+                    margin:'0 0 10 0',
+                    layout:{
+                        type:'hbox'
                     },
                     items: [
+                    {
+                        xtype: 'combobox',
+                        itemId: 'qnaComboBoxPeriodFrom',
+                        id: 'qnaComboBoxPeriodFrom',
+                        fieldLabel: 'From',
+                        labelAlign: 'top',
+                        width:220,
+                        editable: false,
+                        displayField: 'DisplayValue',
+                        valueField: 'Value',
+                        listeners: {
+                            select: {
+                                fn: me.onPeriodFromSelect,
+                                scope: me
+                            }
+                        }
+                    },
+                    {
+                        xtype: 'container',
+                        margin:"0 0 0 10",
+                        layout: {
+                                type: 'absolute'
+                            },
+                        items: [                            
                         {
-                            xtype: 'button',
-                            itemId: 'qnaButtonPeriodLookupOk',
-                            id: 'qnaButtonPeriodLookupOk',
-                            margin: '5 5 5 5',
-                            width: 75,
-                            text: 'Ok',
+                            xtype: 'textfield',
+                            width: 90,
+                            x:0,
+                            y:0,
+                            margin:"15 0 0 0",
+                            id: 'qnaTextFieldPeriodOffsetFrom',
+                            itemId: 'qnaTextFieldPeriodOffsetFrom',
                             listeners: {
-                                click: {
-                                    fn: me.onBtnOk,
-                                    scope: me
+                                'change': function () {
+                                    me._onPeriodOffsetFromChange();
                                 }
                             }
                         },
                         {
-                            xtype: 'button',
-                            itemId: 'qnaButtonPeriodLookupCancel',
-                            id: 'qnaButtonPeriodLookupCancel',
-                            margin: '5 5 5 5',
-                            width: 75,
-                            text: 'Cancel',
+                            xtype: 'textfield',
+                            itemId: 'qnaTextFieldPeriodOffset',
+                            id: 'qnaTextFieldPeriodOffset',
+                            width: 90,
+                            x:0,
+                            y:0,
+                            fieldLabel: 'Period Offset:',
+                            labelAlign:'top',
+                            labelWidth: 70,
                             listeners: {
-                                click: {
-                                    fn: me.onBtnCancel,
-                                    scope: me
+                                'change': function () {
+                                    me._onPeriodOffsetChange();
                                 }
                             }
+                        }]
+                            
+                    }]                        
+                },
+                {
+                    xtype: 'container',
+                    margin:'0 0 10 0',
+                    layout:{
+                        type:'hbox'
+                    },
+                    items: [
+                    {
+                        xtype: 'combobox',
+                        itemId: 'qnaComboBoxPeriodTo',                        
+                        id: 'qnaComboBoxPeriodTo',
+                        fieldLabel: 'To',
+                        labelAlign: 'top',
+                        width:220,
+                        editable: false,
+                        displayField: 'DisplayValue',
+                        valueField: 'Value',
+                        listeners: {
+                            select: {
+                                fn: me.onPeriodToSelect,
+                                scope: me
+                            }
                         }
-                    ]
-                }
-            ],
+                    },
+                    {
+                        xtype:'container',
+                        margin:"0 0 0 10",
+                        layout: {
+                                type: 'absolute'
+                        },
+                        items: [
+                        {
+                            xtype: 'textfield',
+                            width: 90,
+                            x:0,
+                            y:0,
+                            margin:"15 0 0 0",                            
+                            itemId: 'qnaTextFieldPeriodOffsetTo',
+                            id: 'qnaTextFieldPeriodOffsetTo',
+                            listeners: {
+                                'change': function () {
+                                    me._onPeriodOffsetToChange();
+                                }
+                            }
+                        }]                                        
+                    }]                                       
+                },                
+                {
+                    xtype: 'container',
+                    layout:{
+                        type:'hbox'
+                    },
+                    items: [
+                    {
+                        xtype: 'textfield',
+                        itemId: 'qnaTextFieldOverridePeriod',
+                        id: 'qnaTextFieldOverridePeriod',
+                        width:220,
+                        fieldLabel: 'Current Period Override:',
+                        labelAlign: 'top',
+                        listeners: {
+                            'change': function () {
+                                me._onRealValueChange(false, Ext.getCmp('qnaTextFieldOverridePeriod').getValue(), true, me.filterModel.lookupStore);
+                            }
+                        }
+                    }]
+                    
+                }],
+  
+             buttonAlign: 'center',   
+             buttons:[{                  
+                    xtype: 'button',
+                    itemId: 'qnaButtonPeriodLookupOk',
+                    id: 'qnaButtonPeriodLookupOk',
+                    text: 'OK',
+                    listeners: {
+                        click: {
+                            fn: me.onBtnOk,
+                            scope: me
+                        }
+                    }
+                },
+                {
+                    xtype: 'button',
+                    itemId: 'qnaButtonPeriodLookupCancel',
+                    id: 'qnaButtonPeriodLookupCancel',
+                    text: 'Cancel',
+                    listeners: {
+                        click: {
+                            fn: me.onBtnCancel,
+                            scope: me
+                        }
+                    }
+                }],                  
+
             listeners: {
                 show: {
                     fn: me.onWindowShow,
@@ -227,7 +258,7 @@ Ext.define('EvolveQueryEditor.view.PeriodLookupWindow', {
                 },
                 failure: function (response, options) {
                     parent.loadMask.hide();
-                    alert(response.statusText);
+                    EvolveQueryEditor.util.QAAMsg.showErrorDialog(response.statusText);
                     parent.loadMask.hide();
                 }
             });

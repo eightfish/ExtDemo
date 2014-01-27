@@ -19,7 +19,8 @@ Ext.define('EvolveQueryEditor.view.TableTreeLookupWindow', {
     requires: [
         'EvolveQueryEditor.model.Query',
         'EvolveQueryEditor.model.FilterModel',
-        'EvolveQueryEditor.model.FilterValueModel'
+        'EvolveQueryEditor.model.FilterValueModel',
+		'EvolveQueryEditor.util.QAAMsg'
     ],
 
     height: 322,
@@ -31,18 +32,13 @@ Ext.define('EvolveQueryEditor.view.TableTreeLookupWindow', {
     },
     title: 'Lookup',
     modal: true,
-
+    closeAction:'hide',
+    
     initComponent: function() {
         var me = this;
 
         Ext.applyIf(me, {
             items: [
-                {
-                    xtype: 'container',
-                    flex: 1,
-                    region: 'south',
-                    height: 150
-                },
                 {
                     xtype: 'treepanel',
                     flex: 6,
@@ -65,6 +61,46 @@ Ext.define('EvolveQueryEditor.view.TableTreeLookupWindow', {
                         flex: 1
                     }]
                     */
+                },
+                {
+                    xtype: 'container',
+                    region: 'south',
+                    margin: '40 0 0 0 0',
+                    layout: {
+                        align: 'middle',
+                        pack: 'center',
+                        type: 'hbox'
+                    },
+                    items: [
+                        {
+                            xtype: 'button',
+                            itemId: 'qnaButtonTableLookupOk',
+                            id: 'qnaButtonTableLookupOk',
+                            margin: '5 5 5 5',
+                            width: 75,
+                            text: 'OK',
+                            listeners: {
+                                click: {
+                                    fn: me.onBtnOk,
+                                    scope: me
+                                }
+                            }
+                        },
+                        {
+                            xtype: 'button',
+                            itemId: 'qnaButtonTableLookupCancel',
+                            id: 'qnaButtonTableLookupCancel',
+                            margin: '5 5 5 5',
+                            width: 75,
+                            text: 'Cancel',
+                            listeners: {
+                                click: {
+                                    fn: me.onBtnCancel,
+                                    scope: me
+                                }
+                            }
+                        }
+                    ]
                 }
             ],
             listeners: {
@@ -107,18 +143,40 @@ Ext.define('EvolveQueryEditor.view.TableTreeLookupWindow', {
                 },
                 failure: function (response, options) {
                     grid.setLoading(false);
-                    alert(response.statusText);
+                    EvolveQueryEditor.util.QAAMsg.showErrorDialog(response.statusText);
                 }
             });
         }
     },
     
-    itemSelect: function(grid, record, item, index, e, eOpts) {
-        this.hide();
+    trySelectTable : function(table){
+        if (table.leaf) {
+            this.hide();
 
-        EvolveQueryEditor.model.Query.setTable(record.raw.filtercode, record.get('text'), record.raw.namePlusCode);
-        
-        this.onLookupComplete(this.scope);
+            if (table.filtercode === EvolveQueryEditor.model.Query.tableCode) {
+                //Nothing changed.
+                return;
+            }
+            EvolveQueryEditor.model.Query.setTable(table.filtercode, table.text, table.namePlusCode);
+
+            this.onLookupComplete(this.scope);
+        }
+    },
+
+    itemSelect: function (grid, record, item, index, e, eOpts) {
+        this.trySelectTable(record.raw);
+    },
+
+    onBtnOk: function (button, e, eOpts) {
+        var sm = this.down('#treeTables').getSelectionModel();
+        if (sm.hasSelection()) {
+            var selectedTable = sm.getSelection()[0].raw;
+            this.trySelectTable(selectedTable);
+        }
+    },
+
+    onBtnCancel: function (button, e, eOpts) {
+        this.hide();
     }
 }, function (Cls) {
     Cls.Instance = EvolveQueryEditor.view.TableTreeLookupWindow.create();

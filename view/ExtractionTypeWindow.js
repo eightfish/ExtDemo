@@ -10,8 +10,6 @@ Ext.define('EvolveQueryEditor.view.ExtractionTypeWindow', {
     },
 
     requires: [
-        'Ext.util.*',
-        'Ext.form.*',
         'EvolveQueryEditor.util.QAALogger',
         'EvolveQueryEditor.model.ExtractionTypeModel',
         'EvolveQueryEditor.model.FieldDataTypeModel'
@@ -73,15 +71,16 @@ Ext.define('EvolveQueryEditor.view.ExtractionTypeWindow', {
                             ],
                             viewConfig: {
                                 stripeRows: false
+                            },
+                            listeners:{
+                                selectionchange:{
+                                        fn:me.selectionchanged,
+                                        scope:me
+                                    }
                             }
                            
-                            ,
-                            listeners: {
-                                cellclick: {
-                                    fn: me.onqnaExtractionTypeListCellClick,
-                                   scope: me
-                                }
-                            }
+                            
+                            
                         },
 {
     xtype: 'container',
@@ -160,46 +159,39 @@ Ext.define('EvolveQueryEditor.view.ExtractionTypeWindow', {
             ]
         }
     ]
-},
-                        {
-                            xtype: 'container',
-                            region: 'south',
-                            margin: '40 0 0 0 0',
-                            layout: {
-                                align: 'middle',
-                                pack: 'center',
-                                type: 'hbox'
-                            },
-                            items: [
-                                {
-                                    xtype: 'button',
-                                    margin: '5 5 5 5',
-                                    width: 75,
-                                    text: 'Ok',
-                                    listeners: {
-                                        click: {
-                                            fn: me.onBtnOk,
-                                            scope: me
-                                        }
-                                    }
-                                },
-                                {
-                                    xtype: 'button',
-                                    margin: '5 5 5 5',
-                                    width: 75,
-                                    text: 'Cancel',
-                                    listeners: {
-                                        click: {
-                                            fn: me.onBtnCancel,
-                                            scope: me
-                                        }
-                                    }
-                                }
-                            ]
-                        }
+}
+                       
                     ]
                 }
             ],
+            buttonAlign: 'center',
+            buttons: [
+                {
+                    text: 'OK',
+                    scope: me,
+                    id: 'qnaButtonExtractionTypeOK',
+                    itemId: 'qnaButtonOK',
+                    listeners: {
+                        click: {
+                            fn: me.onBtnOk,
+                            scope: me
+                        }
+                    }
+                },
+                {
+                    text: 'Cancel',
+                    id: 'qnaButtonExtractionTypeCancel',
+                    itemId: 'qnaButtonCancel',
+                    scope: me,
+                    listeners: {
+                        click: {
+                            fn: me.onBtnCancel,
+                            scope: me
+                        }
+                    }
+                }
+            ],
+            
             listeners: {
                 show: {
                     fn: me.onExtractionTypeWindowShow,
@@ -233,10 +225,14 @@ Ext.define('EvolveQueryEditor.view.ExtractionTypeWindow', {
         showReverseSignAndScalingFactor?reverseSignAndScalingFactorContainer.show():reverseSignAndScalingFactorContainer.hide();
     },
     
-
-    onqnaExtractionTypeListCellClick: function (tableview, td, cellIndex, record, tr, rowIndex, e, eOpts) {
+    selectionchanged: function (sender,selected,eOpts) {
+        if(selected.length===0)
+        {
+            EvolveQueryEditor.util.QAALogger.warn("nothing be selected");
+            return;
+        }
         
-        this.updateControlsVisible(record);         
+        this.updateControlsVisible(selected[0]);         
     },
 
     onBtnOk: function (button, e, eOpts) {

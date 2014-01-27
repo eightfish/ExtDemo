@@ -18,7 +18,8 @@ Ext.define('EvolveQueryEditor.store.BasicLookupStore', {
 
     requires: [
         'EvolveQueryEditor.model.Query',
-        'EvolveQueryEditor.model.BasicLookupResultModel'
+        'EvolveQueryEditor.model.BasicLookupResultModel',
+        'EvolveQueryEditor.store.JsonPostingProxy'
     ],
 
     constructor: function(cfg) {

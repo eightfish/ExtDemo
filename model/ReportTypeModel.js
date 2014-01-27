@@ -28,15 +28,16 @@ Ext.define('EvolveQueryEditor.model.ReportTypeModel', {
     ],
 
     toFormula: function () {
-        return "QAA";
+        return EvolveQueryEditor.model.ReportTypeModel.DefaultFormulaType;
     }
 
 
 }, function(Cls) {
+    Cls.DefaultFormulaType = 'QAA';
     
     Cls.SummaryReport = Ext.create("EvolveQueryEditor.model.ReportTypeModel", {
         Type: 2,
-        Caption: 'Summary Query',
+        Caption: 'Summary',
 
     });
     
@@ -46,7 +47,7 @@ Ext.define('EvolveQueryEditor.model.ReportTypeModel', {
 
     Cls.DetailReport = Ext.create("EvolveQueryEditor.model.ReportTypeModel", {
         Type: 3,
-        Caption: 'Detail Query'
+        Caption: 'Detail'
     });
     
     Cls.DetailReport.toFormula = function () {

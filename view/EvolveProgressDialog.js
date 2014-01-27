@@ -18,10 +18,10 @@ Ext.define('EvolveQueryEditor.view.EvolveProgressDialog', {
 
     singleton: true,
 
-    height: 100,
+    height: 65,
     width: 389,
     layout: {
-        align: 'middle',
+        align: 'bottom',
         pack: 'center',
         type: 'hbox'
     },
@@ -39,7 +39,6 @@ Ext.define('EvolveQueryEditor.view.EvolveProgressDialog', {
                     xtype: 'label',
                     id: 'progressCaption',
                     itemId: 'progressCaption',
-                    style: 'font-size: x-large',
                     text: ''
                 }
             ],
@@ -54,13 +53,13 @@ Ext.define('EvolveQueryEditor.view.EvolveProgressDialog', {
         me.callParent(arguments);
     },
 
-    onWindowShow: function(component, eOpts) {
+    onWindowShow: function (component, eOpts) {
         //Ext.WindowManager.bringToFront(this);
 
     },
 
     SetProgressText: function(caption) {
-        this.down('#progressCaption').text = caption;
+        this.down('#progressCaption').setText(caption);
     }
 
 });

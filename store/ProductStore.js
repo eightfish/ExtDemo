@@ -17,7 +17,8 @@ Ext.define('EvolveQueryEditor.store.ProductStore', {
     extend: 'Ext.data.Store',
 
     requires: [
-        'EvolveQueryEditor.model.ProductModel'
+        'EvolveQueryEditor.model.ProductModel',
+        'EvolveQueryEditor.store.JsonPostingProxy'
     ],
 
     constructor: function(cfg) {

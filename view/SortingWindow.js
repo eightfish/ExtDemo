@@ -2,13 +2,13 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 {
     extend: 'Ext.window.Window',    
 
-    title: 'OutputField Sorting Window',
+    title: 'Output Field Sorting',
     layout: 'fit',
     autoshow: true,
     modal: true,
-    minHeight: 400,
-    minWidth: 500,
-    width: 500,
+    minHeight: 350,
+    minWidth: 465,
+    width: 465,
     id: 'qnaWindowSorting',
 
     requires: [
@@ -45,13 +45,18 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 		    items: [
 				{
 				    xtype: 'form',
-				    width: 150,
+					layout:
+						{
+							type: 'hbox'
+						},
 				    items: [
 						{
 						    xtype: 'gridpanel',
 							id: 'qnaGridSorting',
 						    itemId: 'qnaGridSorting',
 						    region: 'center',
+							width: 350,
+							margin: '0 10 0 0',
 						    plugins: [cellEditing],
 						    store: me.outputFieldsStore,							
 						    // viewConfig : {
@@ -74,7 +79,7 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 									renderer: function(extractType) {
 										return extractType.get('description');
 									},
-								    width: 150,
+								    width: 100,
 								    sortable: false,
 								    menuDisabled: true
 								},
@@ -84,7 +89,6 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 								    width: 100,
 								    sortable: false,
 								    menuDisabled: true,
-								    flex: 1,
 								    editor:
 									{
 									    xtype: 'combobox',
@@ -116,7 +120,7 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 									id: 'qnaButtonMoveToTop',
                                     itemId: 'qnaButtonMoveToTop',
                                     width: 50,
-                                    margin: '5 0 0 5',
+                                    margin: '27 0 0 10',
                                     listeners:
 									{
 									    click:
@@ -132,7 +136,7 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 								    width: 50,
 									id: 'qnaButtonMoveUp',
                                     itemId: 'qnaButtonMoveUp',
-								    margin: '5 0 0 5',
+								    margin: '10 0 0 10',
 								    listeners:
 									{
 									    click:
@@ -148,7 +152,7 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 									id: 'qnaButtonMoveDown',
 									itemId: 'qnaButtonMoveDown',
 								    width: 50,
-								    margin: '5 0 0 5',
+								    margin: '10 0 0 10',
 								    listeners:
 									{
 									    click:
@@ -164,7 +168,7 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 									id: 'qnaButtonMoveToBottom',
 									itemId: 'qnaButtonMoveToBottom',
 								    width: 50,
-								    margin: '5 0 0 5',
+								    margin: '10 0 0 10',
 								    listeners:
 									{
 									    click:
@@ -182,7 +186,7 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 						{
 						    text: 'OK',
 						    scope: me,
-							id: 'qnaButtonOK',
+							id: 'qnaButtonSortingWindowOK',
 							itemId: 'qnaButtonOK',
 						    handler: function () {
 						        me.onLookupComplete(me.outputFieldsStore, me.scope);
@@ -191,7 +195,7 @@ Ext.define('EvolveQueryEditor.view.SortingWindow',
 						},
 						{
 						    text: 'Cancel',
-							id: 'qnaButtonCancel',
+							id: 'qnaButtonSortingWindowCancel',
 							itemId: 'qnaButtonCancel',
 						    scope: me,
 						    handler: me.close

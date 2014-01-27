@@ -17,7 +17,11 @@ Ext.define('EvolveQueryEditor.model.FilterModel', {
     extend: 'Ext.data.Model',
     idgen: 'sequential',
     idProperty: 'id',
-
+    
+    requires: [
+		
+	],
+    
     uses: [
         'EvolveQueryEditor.model.FilterValueModel'
     ],
@@ -30,32 +34,44 @@ Ext.define('EvolveQueryEditor.model.FilterModel', {
     },
     fields: [
         {
-            name: 'single'
+            name: 'single',
+            type: 'boolean'
         },
         {
-            name: 'name'
+            name: 'name',
+			type: 'string'
         },
         {
             name: 'from',
+			type: 'string',
             defaultValue: undefined
         },
         {
-            name: 'to'
+            name: 'to',
+			type: 'string',
+			defaultValue: undefined,
+			convert: function (value, record) {
+				return !record.get('single') && !record.isTable() ? value: ''; 
+			}
         },
         {
-            name: 'codePath'
+            name: 'codePath',
+			type: 'string'
         },
         {
-            name: 'dataType'
+            name: 'dataType', //todo: should use FieldDataTypeModel rather than plain string
+			type: 'string'
         },
         {
             name: 'lookupCategory'
         },
         {
-            name: 'allowSegments'
+            name: 'allowSegments',
+			type: 'boolean'
         },
         {
-            name: 'allowMultipleFilters'
+            name: 'allowMultipleFilters',
+			type: 'boolean'
         },
         {
             name: 'hasValue',
@@ -63,35 +79,42 @@ Ext.define('EvolveQueryEditor.model.FilterModel', {
             defaultValue: false
         },
         {
-            name: 'operator',
-            defaultValue: 1 // IS_EQUAL
-        },
-        {
-            name: 'mode',
-            defaultValue: 0 // DEFAULT
-        },
-        {
-            name: 'caseSens',
-            type: 'boolean',
-            defaultValue: false
-        },
-        {
-            name: 'segment',
-            type: 'boolean',
-            defaultValue: false
-        },
-        {
-            name: 'segmentOffset',
-            defaultValue: 0
-        },
-        {
-            name: 'segmentLength',
-            defaultValue: 0
-        },
-        {
             name: 'superFieldFilter',
             type: 'boolean',
             defaultValue: false
         },
-]
+        {
+            name: 'isOptionalFilter',
+            type: 'boolean',
+            defaultValue: false
+        },
+    ],
+        
+    isOptionalFilter: function () {
+        return this.get('isOptionalFilter') === true;
+    },
+
+    isSuperFieldFilter: function () {
+        return this.get('superFieldFilter') === true;
+    },
+	
+    isTable: function () {
+        return this.get('codePath') === 'TABLE';
+    },
+
+	toJsonWithOptions : function() {
+		var filterOptionsModel = EvolveQueryEditor.model.FilterOptionsModel.createFromFilterModel(this);
+		var jsonObj = {};
+		jsonObj.codePath = this.get('codePath');
+		jsonObj.valueFrom = filterOptionsModel.get('from');
+		jsonObj.valueTo = filterOptionsModel.get('to');
+		jsonObj.operator = filterOptionsModel.get('operator').get('value');
+		jsonObj.mode = filterOptionsModel.get('mode').get('value');
+		jsonObj.caseSens = !filterOptionsModel.get('caseInsensitive');
+		jsonObj.segment = false; //filterOptionsModel.get('segment');
+		jsonObj.segmentOffset = filterOptionsModel.get('segmentOffset');
+		jsonObj.segmentLength = filterOptionsModel.get('segmentLength');
+		
+		return jsonObj;
+	}                   
 });
