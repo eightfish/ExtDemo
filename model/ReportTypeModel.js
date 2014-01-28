@@ -28,12 +28,11 @@ Ext.define('EvolveQueryEditor.model.ReportTypeModel', {
     ],
 
     toFormula: function () {
-        return EvolveQueryEditor.model.ReportTypeModel.DefaultFormulaType;
+        return "QAA";
     }
 
 
 }, function(Cls) {
-    Cls.DefaultFormulaType = 'QAA';
     
     Cls.SummaryReport = Ext.create("EvolveQueryEditor.model.ReportTypeModel", {
         Type: 2,

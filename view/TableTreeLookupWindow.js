@@ -114,6 +114,28 @@ Ext.define('EvolveQueryEditor.view.TableTreeLookupWindow', {
         me.callParent(arguments);
     },
     
+    _flattenTableResult:function (array) {
+        var worker = [];
+    
+        function rFlatten(a) {
+            var i, ln, v;
+    
+            for (i = 0, ln = a.length; i < ln; i++) {
+                v = a[i];                
+              
+                worker.push(v);
+              
+                if (!Ext.isEmpty(v.children) && Ext.isArray(v.children)) {
+                    rFlatten(v.children);
+                } 
+            }
+    
+            return worker;
+        }
+    
+        return rFlatten(array);
+    }, 
+    
     onWindowShow: function (component, eOpts) {
         //this.down('#treeTables').store.load();
 
@@ -138,6 +160,13 @@ Ext.define('EvolveQueryEditor.view.TableTreeLookupWindow', {
                 success: function (response) {
                     grid.setLoading(false);
                     var data = Ext.decode(response.responseText);
+                    
+                    //change the gap between icon and description
+                    var flattenArray = parent._flattenTableResult(data.data.children);                     
+                    Ext.each(flattenArray, function(item){
+					   item.iconCls = me._getTreeNonLeafNodeImgCls();
+				    });
+                
                     storeModel.isTablesSet = true;
                     parent.down('#treeTables').setRootNode(data.data);
                 },

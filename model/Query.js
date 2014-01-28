@@ -125,7 +125,7 @@ Ext.define('EvolveQueryEditor.model.Query', {
         return (val === undefined || val == null || val.length <= 0) ? true : false;
     },
 
-    filterToFormula: function (filter) {
+	_filterToFormula: function (filter) {
         var codePath = filter.get('codePath');
         var from = filter.get('from');
         var to = filter.get('to');
@@ -161,57 +161,59 @@ Ext.define('EvolveQueryEditor.model.Query', {
         return ret;
     },
 
-    queryToFormula: function () {
+	isProductCodeEmpty : function () {
+		return Ext.isEmpty(this.getProductCode());
+	},
+	
+	isTableCodeEmpty : function () {
+		return Ext.isEmpty(this.tableCode);
+	},
+	
+	isFilterCountAsZero : function () {
+		return this.filtersStore.count() === 0;
+	},
+	
+	isFilterFromEmpty : function () {
+		var ret = { 
+			isEmpty : false,
+			name : ''
+		};
+		
+		var filtersStore = this.filtersStore;
+		for (var i = 0; i < filtersStore.count() ; i++) {
+			var filter = filtersStore.getAt(i);
+			var from = filter.get('from');
+            if (!filter.isTable() && Ext.isEmpty(from)) {
+				ret.isEmpty = true;		
+				ret.name = filter.get('name');
+            }
+		}
+		
+		return ret;
+	},
+	
+	isOutputFieldCountAsZero : function () {
+		return this.getOutputFieldsStore().count() === 0;	
+	},
+	
+	queryToFormula: function () {
         var query = this;
-		
-		var ret = { success: true,
-					error: '',
-					formula: '' };
-		
-		var productCode = query.getProductCode();
-		if(Ext.isEmpty(productCode)) {
-			ret.success = false;
-			ret.error = 'productCode';
-			return ret;
-		}
-		
-		var tableCode = query.tableCode;
-		if(Ext.isEmpty(tableCode)) {
-			ret.success = false;
-			ret.error = 'tableCode';
-			return ret;
-		}
-		
-        var formula = Ext.String.format("{0},{1},{2},{3},", "1", "2", productCode, tableCode);
+        var ret = Ext.String.format("{0},{1},{2},{3},", "1", "2", query.getProductCode(), query.tableCode);
 
         var filtersStore = query.filtersStore;
-		if(filtersStore.count() === 0) {
-			ret.success = false;
-			ret.error = 'filtersStore';
-			return ret;
-		}
-		
         for (var i = 0; i < filtersStore.count() ; i++) {
             var filter = filtersStore.getAt(i);
             if (!filter.isTable()) {
-                formula += Ext.String.format("{0},", this.filterToFormula(filter));
+                ret += Ext.String.format("{0},", this._filterToFormula(filter));
             }
         }
-		
         var outputFieldsStore = query.getOutputFieldsStore();
-		if(outputFieldsStore.count() === 0) {
-			ret.success = false;
-			ret.error = 'outputFieldsStore';
-			return ret;
-		}
-		
         for (var i = 0; i < outputFieldsStore.count() ; i++) {
             var outputField = outputFieldsStore.getAt(i);
-            formula += Ext.String.format("{0},", this.outputFieldToFormula(outputField));
+            ret += Ext.String.format("{0},", this.outputFieldToFormula(outputField));
         }
-		
-		ret.formula = Ext.String.format("={0}(\"{1}{2}\",{3})", this.reportType.toFormula(), formula, "RT=-4154,RF=111111011,AF=1,TP=,", "");
-        return ret;
+
+        return Ext.String.format("={0}(\"{1}{2}\",{3})", this.reportType.toFormula(), ret, "RT=-4154,RF=111111011,AF=1,TP=,", "");
     },
 
     removeQuoteIfPossible: function(value){

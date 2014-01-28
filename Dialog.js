@@ -65,23 +65,5 @@ Ext.define('EvolveQueryEditor.Dialog', {
         
         self.dialogContainer.close(query);
         EvolveQueryEditor.model.Query.clientToken = undefined;
-        /*
-        self.dialogContainer.UX.showLoadingMask();
-        Ext.Ajax.request({
-            url: EvolveQueryEditor.model.Query.serverUrlBase + '&method=Logout',
-            timeout: 60000,
-            async: true,
-            jsonData: {
-                clientToken: EvolveQueryEditor.model.Query.clientToken
-            },
-            success: function (response) {
-                self.dialogContainer.close(query);
-            },
-            failure: function (response, options) {
-                EvolveQueryEditor.util.QAALogger.error("Cannot logout from evovle", { dump: response.statusText });
-                self.dialogContainer.close(query);
-            }
-        });
-        */
     }
 });
